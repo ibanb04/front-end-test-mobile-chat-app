@@ -1,27 +1,32 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, FlatList } from 'react-native';
+import React from 'react';
+import { StyleSheet, Pressable, SafeAreaView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAppContext } from '@/hooks/AppContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Avatar } from '@/components/Avatar';
-import { UserListItem } from '@/components/UserListItem';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function ProfileScreen() {
-  const { users, currentUser, login, isLoggedIn } = useAppContext();
+  const { currentUser, logout } = useAppContext();
+  const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoggedIn && users.length > 0) {
-      login(users[0].id);
-    }
-  }, [isLoggedIn, users]);
-
-  const handleUserSelect = (userId: string) => {
-    login(userId);
+  const handleLogout = () => {
+    logout();
+    // The navigation to login will be handled by the useProtectedRoute hook in _layout.tsx
   };
 
+  if (!currentUser) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ThemedText>Loading user profile...</ThemedText>
+      </ThemedView>
+    );
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      {currentUser ? (
+    <SafeAreaView style={styles.safeArea}>
+      <ThemedView style={styles.container}>
         <ThemedView style={styles.profileHeader}>
           <Avatar user={currentUser} size={100} />
           <ThemedView style={styles.profileInfo}>
@@ -31,41 +36,42 @@ export default function ProfileScreen() {
             </ThemedText>
           </ThemedView>
         </ThemedView>
-      ) : (
-        <ThemedView style={styles.loadingContainer}>
-          <ThemedText>Loading user profile...</ThemedText>
+        
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle">Account Information</ThemedText>
+          
+          <ThemedView style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>ID:</ThemedText>
+            <ThemedText>{currentUser.id}</ThemedText>
+          </ThemedView>
+          
+          <ThemedView style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>Full Name:</ThemedText>
+            <ThemedText>{currentUser.name}</ThemedText>
+          </ThemedView>
         </ThemedView>
-      )}
-      
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">Switch User</ThemedText>
-        <ThemedText style={styles.sectionDescription}>
-          Select a user from the list below to switch accounts
-        </ThemedText>
+        
+        <ThemedView style={styles.buttonContainer}>
+          <Pressable style={styles.logoutButton} onPress={handleLogout}>
+            <IconSymbol name="arrow.right.square" size={20} color="#FFFFFF" />
+            <ThemedText style={styles.logoutText}>Log Out</ThemedText>
+          </Pressable>
+        </ThemedView>
       </ThemedView>
-      
-      <FlatList
-        data={users}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <UserListItem
-            user={item}
-            onSelect={() => handleUserSelect(item.id)}
-            isSelected={currentUser?.id === item.id}
-          />
-        )}
-        contentContainerStyle={styles.listContainer}
-      />
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingTop: 60,
   },
   loadingContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -85,14 +91,34 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: 20,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E1E1E1',
+    marginTop: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
-    color: '#8F8F8F',
+  infoRow: {
+    flexDirection: 'row',
+    marginTop: 12,
   },
-  listContainer: {
-    paddingBottom: 20,
+  infoLabel: {
+    fontWeight: 'bold',
+    marginRight: 10,
+    width: 100,
+  },
+  buttonContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginBottom: 80, // Add padding to ensure the button is visible above the tab bar
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    backgroundColor: '#FF3B30',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+  },
+  logoutText: {
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
 });
