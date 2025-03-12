@@ -1,74 +1,200 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import React, { useState } from 'react';
+import { FlatList, StyleSheet, Pressable, Modal } from 'react-native';
+import { useAppContext } from '@/hooks/AppContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ChatListItem } from '@/components/ChatListItem';
+import { UserListItem } from '@/components/UserListItem';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function ChatsScreen() {
+  const { currentUser, users, chats, createChat } = useAppContext();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+
+  const toggleUserSelection = (userId: string) => {
+    if (selectedUsers.includes(userId)) {
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+    } else {
+      setSelectedUsers([...selectedUsers, userId]);
+    }
+  };
+
+  const handleCreateChat = () => {
+    if (currentUser && selectedUsers.length > 0) {
+      const participants = [currentUser.id, ...selectedUsers];
+      createChat(participants);
+      setModalVisible(false);
+      setSelectedUsers([]);
+    }
+  };
+
+  const renderEmptyComponent = () => (
+    <ThemedView style={styles.emptyContainer}>
+      <ThemedText style={styles.emptyText}>No chats yet</ThemedText>
+      <ThemedText>Tap the + button to start a new conversation</ThemedText>
+    </ThemedView>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title">Chats</ThemedText>
+        <Pressable
+          style={styles.newChatButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <IconSymbol name="plus" size={24} color="#007AFF" />
+        </Pressable>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+      <FlatList
+        data={chats}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ChatListItem
+            chat={item}
+            currentUserId={currentUser?.id || ''}
+            users={users}
+          />
+        )}
+        ListEmptyComponent={renderEmptyComponent}
+        contentContainerStyle={styles.listContainer}
+      />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(false);
+          setSelectedUsers([]);
+        }}
+      >
+        <ThemedView style={styles.modalContainer}>
+          <ThemedView style={styles.modalContent}>
+            <ThemedView style={styles.modalHeader}>
+              <ThemedText type="subtitle">New Chat</ThemedText>
+              <Pressable onPress={() => {
+                setModalVisible(false);
+                setSelectedUsers([]);
+              }}>
+                <IconSymbol name="xmark" size={24} color="#007AFF" />
+              </Pressable>
+            </ThemedView>
+
+            <ThemedText style={styles.modalSubtitle}>
+              Select users to chat with
+            </ThemedText>
+
+            <FlatList
+              data={users.filter(user => user.id !== currentUser?.id)}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <UserListItem
+                  user={item}
+                  onSelect={() => toggleUserSelection(item.id)}
+                  isSelected={selectedUsers.includes(item.id)}
+                />
+              )}
+              style={styles.userList}
+            />
+
+            <Pressable
+              style={[
+                styles.createButton,
+                selectedUsers.length === 0 && styles.disabledButton
+              ]}
+              onPress={handleCreateChat}
+              disabled={selectedUsers.length === 0}
+            >
+              <ThemedText style={styles.createButtonText}>
+                Create Chat
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
+        </ThemedView>
+      </Modal>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  newChatButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  listContainer: {
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    marginTop: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalSubtitle: {
+    marginBottom: 10,
+  },
+  userList: {
+    maxHeight: 400,
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+  },
+  createButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
