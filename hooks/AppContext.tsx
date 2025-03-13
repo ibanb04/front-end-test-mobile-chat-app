@@ -1,30 +1,47 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useUser, User } from './useUser';
 import { useChats, Chat } from './useChats';
+import { DatabaseProvider } from '../database/DatabaseProvider';
+import { useDatabase } from './useDatabase';
 
 type AppContextType = {
   users: User[];
   currentUser: User | null;
   isLoggedIn: boolean;
-  login: (userId: string) => boolean;
+  login: (userId: string) => Promise<boolean>;
   logout: () => void;
   chats: Chat[];
-  createChat: (participantIds: string[]) => Chat | null;
-  sendMessage: (chatId: string, text: string, senderId: string) => boolean;
+  createChat: (participantIds: string[]) => Promise<Chat | null>;
+  sendMessage: (chatId: string, text: string, senderId: string) => Promise<boolean>;
+  loading: boolean;
+  dbInitialized: boolean;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export function AppProvider({ children }: { children: ReactNode }) {
+function AppContent({ children }: { children: ReactNode }) {
+  const { isInitialized } = useDatabase();
   const userContext = useUser();
   const chatContext = useChats(userContext.currentUser?.id || null);
+  
+  const loading = !isInitialized || userContext.loading || chatContext.loading;
 
   const value = {
     ...userContext,
     ...chatContext,
+    loading,
+    dbInitialized: isInitialized,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  return (
+    <DatabaseProvider>
+      <AppContent>{children}</AppContent>
+    </DatabaseProvider>
+  );
 }
 
 export function useAppContext() {
