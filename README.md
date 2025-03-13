@@ -17,7 +17,6 @@ This codebase was generated **entirely from scratch** using **Cursor IDE** with 
 
 Why? Because we wanted to allow possible **errors that result from improper AI usage**, giving you the opportunity to **possible identify and fix them** and above all, ensuring you **don’t introduce new ones**. Remember, we expect you to demonstrate **good AI-assisted coding practices** throughout this test if you choose to use it.
 
-
 ## Getting Started with running the app in local
 
 1. Clone this repository
@@ -31,48 +30,20 @@ You are free to choose any number of tasks from the list of **Bug Fixes, UI/UX E
 
 In any case, **remember to document your task selection, implementation details, and reasoning** in the `IMPLEMENTATION.md` file, as outlined in the **Submission Guidelines**.
 
-
-### Bug Fixes
-
-- [ ] Fix message ordering in chat rooms (newest messages should appear at the bottom, next to the input box)
-- [ ] Resolve keyboard overlap issues on different device sizes
-- [ ] Address message sending delays and error handling
-- [ ] Fix user status indicators (online/offline)
-- [ ] Resolve navigation state persistence issues
-- [ ] Fix text input sizing and multiline handling
-
-### UI/UX Enhancements
-
-- [ ] Implement dark mode support
-- [ ] Add message delivery status indicators (sent, delivered, read)
-- [ ] Improve loading states and skeleton screens
-- [ ] Add pull-to-refresh functionality
-- [ ] Enhance accessibility features (screen reader support, contrast)
-- [ ] Add haptic feedback for important actions
-- [ ] Improve empty state designs (no messages, no chats)
-- [ ] Implement smoother animations and transitions
-- [ ] Add image compression before sending
-
 ### Feature Additions
 
-- [ ] Implement message reactions (emoji responses)
-- [ ] Add media sharing capabilities (photos, videos)
+- [ ] Add media sharing capabilities (photos preferably, with a optimized/compressed preview instead of the original image)
+- [ ] Add read receipts for messages along with status indicators (sent, read)
+- [ ] Implement message reactions (emoji responses, easy but still gets points)
 - [ ] Create group chat creation and management
 - [ ] Implement message search functionality
 - [ ] Add message deletion and editing
-- [ ] Implement typing indicators
-- [ ] Add voice messages or audio recording
-- [ ] Create user blocking functionality
-- [ ] Implement push notifications
-- [ ] Add read receipts for messages
+- [ ] Add voice messages (recording/playing)
 - [ ] Implement message forwarding
 
 ### Performance Improvements
 
 - [ ] Optimize message list rendering with virtualization
-- [ ] Implement efficient image caching
-- [ ] Add offline support with message queuing
-- [ ] Improve application startup time
 - [ ] Optimize database queries and state management
 - [ ] Implement proper memory management for media content
 - [ ] Add pagination for loading older messages
@@ -81,13 +52,21 @@ In any case, **remember to document your task selection, implementation details,
 
 - [ ] Implement comprehensive unit and integration tests
 - [ ] Refactor components for better reusability
-- [ ] Improve TypeScript type definitions
-- [ ] Add proper error boundaries and fallbacks
-- [ ] Implement consistent state management patterns
-- [ ] Add comprehensive input validation
-- [ ] Improve code documentation and comments
-- [ ] Optimize bundle size and dependencies
 - [ ] Implement proper logging and monitoring
+
+### Bug Fixes
+
+- [ ] Fix message ordering in chat rooms (newest messages should appear at the bottom, next to the input box)
+- [ ] Resolve keyboard or other components overlap issues on different device sizes
+
+### UI/UX Enhancements
+
+- [ ] Implement dark mode support
+- [ ] Improve loading states and skeleton screens
+- [ ] Enhance accessibility features (screen reader support, contrast)
+- [ ] Add haptic feedback for important actions
+- [ ] Improve empty state designs (no messages, no chats)
+- [ ] Implement smoother animations and transitions
 
 ## Assessment Criteria
 
@@ -97,8 +76,7 @@ Your submission will be evaluated on:
 2. **Problem Solving**: How you approach and solve the identified issues
 3. **Technical Proficiency**: Effective use of React Native, TypeScript, and related technologies
 4. **UI/UX Skills**: Visual appeal and user experience of your implementation
-5. **Feature Implementation**: Completeness and quality of implemented features
-6. **Documentation**: Clear explanation of your changes and decisions
+5. **Documentation**: Clear explanation of your changes and decisions
 
 ## Submission Guidelines
 
