@@ -12,11 +12,13 @@ import { DrizzleStudioDevTool } from '@/database/DrizzleStudio';
 
 SplashScreen.preventAutoHideAsync();
 
-function useProtectedRoute(isLoggedIn: boolean) {
+function useProtectedRoute(isLoggedIn: boolean, loading: boolean) {
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
+    if (loading) return; // Don't redirect during loading
+    
     const inAuthGroup = segments[0] === 'login';
     
     if (!isLoggedIn && !inAuthGroup) {
@@ -26,17 +28,14 @@ function useProtectedRoute(isLoggedIn: boolean) {
       // Redirect to the home page if logged in and trying to access login page
       router.replace('/(tabs)');
     }
-  }, [isLoggedIn, segments]);
+  }, [isLoggedIn, segments, loading]);
 }
 
 function RootLayoutNav() {
   const { isLoggedIn, loading } = useAppContext();
 
-  // Don't redirect during loading
-  if (!loading) {
-    // Use the helper hook to protect routes
-    useProtectedRoute(isLoggedIn);
-  }
+  // Call the hook unconditionally
+  useProtectedRoute(isLoggedIn, loading);
 
   return (
     <>

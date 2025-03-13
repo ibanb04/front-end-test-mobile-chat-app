@@ -22,14 +22,20 @@ if (__DEV__) {
 }
 
 export function DrizzleStudioDevTool() {
-  // Only use Drizzle Studio in development and if the plugin is available
-  if (__DEV__ && useDrizzleStudio !== NoopStudio) {
-    try {
+  // Always call the hook, but only pass the database if we're in dev mode
+  // and the plugin is available
+  try {
+    if (__DEV__ && useDrizzleStudio !== NoopStudio) {
       const db = SQLite.openDatabaseSync('chat-app.db');
       useDrizzleStudio(db);
-    } catch (error) {
-      console.warn('Failed to initialize Drizzle Studio:', error);
+    } else {
+      // Still call the hook but with null to maintain hook call order
+      useDrizzleStudio(null);
     }
+  } catch (error) {
+    console.warn('Failed to initialize Drizzle Studio:', error);
+    // Ensure the hook is still called to maintain hook order
+    useDrizzleStudio(null);
   }
   
   // Return an empty view - the actual UI will be provided by the plugin if available
