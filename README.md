@@ -9,7 +9,7 @@ Welcome to the **Sainapsis Front-End Test!** This test involves implementing a s
 - We’ve designed this test to reflect real-world challenges you'll face at **Sainapsis**—although in a much simpler form.
 - We encourage you to leverage **AI tools**, such as [Cursor IDE](https://cursor.sh) (which offers a free tier with advanced AI models), to enhance your workflow. However, **you must remain in full control** of any AI-generated code.
 - Ensure that all changes adhere to **high-quality standards** and follow **best practices**.
-- During the review process, we will analyze your decisions, and in a **live coding session**, we may request further improvements. **You can still use AI in your IDE of choise** during live coding, but be ready to explain your codebase understanding and the reasoning behind your modifications—whether implemented with AI assistance or manually.
+- During the review process, we will analyze your decisions, and in a **live coding session**, we may request further improvements. **You can still use AI in your IDE of choise** during live coding, but be ready to explain your codebase understanding and the reasoning behind your modifications whether implemented with AI assistance or manually.
 
 ## 🎉 Fun Fact
 
@@ -26,9 +26,14 @@ Why? Because we wanted to allow possible **errors that result from improper AI u
 
 ## Your Challenge
 
-You are free to choose any number of tasks from the list of **Bug Fixes, UI/UX Enhancements, Feature Additions, or Performance Improvements**. Alternatively, you can **ignore the list and improve the app as you see fit**—which we’d love to see as well!  
+You’re free to choose any number of tasks from the list of **Bug Fixes**, **UI/UX Enhancements**, **Feature Additions**, or **Performance Improvements**. Alternatively, you can **ignore the list and improve the app however you see fit** which we’d love to see!
 
-In any case, **remember to document your task selection, implementation details, and reasoning** in the `IMPLEMENTATION.md` file, as outlined in the **Submission Guidelines**.
+That said, we care far more about **code quality** and **simplicity** (*KISS principles*) than about the number of tasks completed. **Choose tasks that best showcase your seniority and thoughtful design**, rather than trying to tackle too much.
+
+Please make sure to **document your task selection, implementation details, and reasoning** in the `IMPLEMENTATION.md` file, as outlined in the **Submission Guidelines**.
+
+> ⚠️ A common pitfall we've seen is **overscoping** — putting in a lot of effort across too many tasks, which leads to rushed or unfocused results.  
+> This test is **very doable in just a few focused hours** if scped and approached smartly with one goal in mind, showcase your code simplicity and quality, thats it.
 
 ### Feature Additions
 
