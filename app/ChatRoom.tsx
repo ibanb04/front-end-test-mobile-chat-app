@@ -17,6 +17,7 @@ import { ThemedView } from '@/components/common/ThemedView';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { Avatar } from '@/components/Avatar';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Message } from '@/hooks/useChats';
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
@@ -50,6 +51,15 @@ export default function ChatRoomScreen() {
       }, 100);
     }
   }, [chat?.messages.length]);
+
+  const renderMessage = ({ item }: { item: Message }) => (
+    <MessageBubble
+      message={item}
+      isCurrentUser={item.senderId === currentUser?.id}
+    />
+  );
+
+  const keyExtractor = (item: Message) => item.id;
 
   if (!chat || !currentUser) {
     return (
@@ -92,19 +102,17 @@ export default function ChatRoomScreen() {
         <FlatList
           ref={flatListRef}
           data={chat.messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <MessageBubble
-              message={item}
-              isCurrentUser={item.senderId === currentUser.id}
-            />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderMessage}
           contentContainerStyle={styles.messagesContainer}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
           ListEmptyComponent={() => (
             <ThemedView style={styles.emptyContainer}>
               <ThemedText>No messages yet. Say hello!</ThemedText>
             </ThemedView>
           )}
+          inverted={false}
         />
 
         <ThemedView style={styles.inputContainer}>

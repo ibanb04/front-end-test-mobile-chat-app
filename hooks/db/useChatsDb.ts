@@ -70,14 +70,14 @@ export function useChatsDb(currentUserId: string | null) {
             .select()
             .from(messages)
             .where(eq(messages.chatId, chatId))
-            .orderBy(messages.timestamp);
+            .orderBy(desc(messages.timestamp));
             
           const chatMessages = messagesData.map(m => ({
             id: m.id,
             senderId: m.senderId,
             text: m.text,
             timestamp: m.timestamp,
-          }));
+          })).reverse();
           
           // Determine last message
           const lastMessage = chatMessages.length > 0 
@@ -91,7 +91,7 @@ export function useChatsDb(currentUserId: string | null) {
             lastMessage,
           });
         }
-        
+
         setUserChats(loadedChats);
       } catch (error) {
         console.error('Error loading chats:', error);
