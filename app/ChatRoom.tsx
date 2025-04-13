@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  FlatList, 
-  TextInput, 
-  Pressable, 
-  KeyboardAvoidingView, 
-  Platform
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -23,16 +24,16 @@ export default function ChatRoomScreen() {
   const [messageText, setMessageText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
-  
+
   const chat = chats.find(c => c.id === chatId);
-  
+
   const chatParticipants = chat?.participants
     .filter(id => id !== currentUser?.id)
     .map(id => users.find(user => user.id === id))
     .filter(Boolean) || [];
-  
-  const chatName = chatParticipants.length === 1 
-    ? chatParticipants[0]?.name 
+
+  const chatName = chatParticipants.length === 1
+    ? chatParticipants[0]?.name
     : `${chatParticipants[0]?.name || 'Unknown'} & ${chatParticipants.length - 1} other${chatParticipants.length > 1 ? 's' : ''}`;
 
   const handleSendMessage = () => {
@@ -59,69 +60,71 @@ export default function ChatRoomScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <StatusBar style="auto" />
-      <Stack.Screen 
-        options={{
-          headerTitle: () => (
-            <View style={styles.headerContainer}>
-              <Avatar 
-                user={chatParticipants[0]} 
-                size={32} 
-                showStatus={false}
-              />
-              <ThemedText type="defaultSemiBold" numberOfLines={1}>
-                {chatName}
-              </ThemedText>
-            </View>
-          ),
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
-              <IconSymbol name="chevron.left" size={24} color="#007AFF" />
-            </Pressable>
-          ),
-        }} 
-      />
-
-      <FlatList
-        ref={flatListRef}
-        data={chat.messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <MessageBubble
-            message={item}
-            isCurrentUser={item.senderId === currentUser.id}
-          />
-        )}
-        contentContainerStyle={styles.messagesContainer}
-        ListEmptyComponent={() => (
-          <ThemedView style={styles.emptyContainer}>
-            <ThemedText>No messages yet. Say hello!</ThemedText>
-          </ThemedView>
-        )}
-      />
-
-      <ThemedView style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={messageText}
-          onChangeText={setMessageText}
-          placeholder="Type a message..."
-          multiline
+    <SafeAreaView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <StatusBar style="auto" />
+        <Stack.Screen
+          options={{
+            headerTitle: () => (
+              <View style={styles.headerContainer}>
+                <Avatar
+                  user={chatParticipants[0]}
+                  size={32}
+                  showStatus={false}
+                />
+                <ThemedText type="defaultSemiBold" numberOfLines={1}>
+                  {chatName}
+                </ThemedText>
+              </View>
+            ),
+            headerLeft: () => (
+              <Pressable onPress={() => router.back()}>
+                <IconSymbol name="chevron.left" size={24} color="#007AFF" />
+              </Pressable>
+            ),
+          }}
         />
-        <Pressable
-          style={[styles.sendButton, !messageText.trim() && styles.disabledButton]}
-          onPress={handleSendMessage}
-          disabled={!messageText.trim()}
-        >
-          <IconSymbol name="arrow.up.circle.fill" size={32} color="#007AFF" />
-        </Pressable>
-      </ThemedView>
-    </KeyboardAvoidingView>
+
+        <FlatList
+          ref={flatListRef}
+          data={chat.messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              isCurrentUser={item.senderId === currentUser.id}
+            />
+          )}
+          contentContainerStyle={styles.messagesContainer}
+          ListEmptyComponent={() => (
+            <ThemedView style={styles.emptyContainer}>
+              <ThemedText>No messages yet. Say hello!</ThemedText>
+            </ThemedView>
+          )}
+        />
+
+        <ThemedView style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={messageText}
+            onChangeText={setMessageText}
+            placeholder="Type a message..."
+            multiline
+          />
+          <Pressable
+            style={[styles.sendButton, !messageText.trim() && styles.disabledButton]}
+            onPress={handleSendMessage}
+            disabled={!messageText.trim()}
+          >
+            <IconSymbol name="arrow.up.circle.fill" size={32} color="#007AFF" />
+          </Pressable>
+        </ThemedView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
