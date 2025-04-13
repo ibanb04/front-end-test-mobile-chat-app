@@ -105,14 +105,22 @@ export default function ChatRoomScreen() {
           keyExtractor={keyExtractor}
           renderItem={renderMessage}
           contentContainerStyle={styles.messagesContainer}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
           ListEmptyComponent={() => (
             <ThemedView style={styles.emptyContainer}>
               <ThemedText>No messages yet. Say hello!</ThemedText>
             </ThemedView>
           )}
-          inverted={false}
+          initialScrollIndex={chat.messages.length > 0 ? chat.messages.length - 1 : 0}
+          getItemLayout={(_, index) => ({
+            length: 80,
+            offset: 80 * index,
+            index,
+          })}
+          windowSize={10}// number of items to render before and after the visible area 
+          maxToRenderPerBatch={10}// number of items to render in one batch
+          updateCellsBatchingPeriod={50}// number of milliseconds between each batch of cells that are rendered
+          initialNumToRender={15}// number of items to render when the list is first rendered
+          removeClippedSubviews
         />
 
         <ThemedView style={styles.inputContainer}>
