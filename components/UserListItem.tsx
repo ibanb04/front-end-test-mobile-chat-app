@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { Avatar } from './Avatar';
+import { ThemedText } from '@/components/common/ThemedText';
+import { Avatar } from '@/components/Avatar';
 import { User } from '@/hooks/useUser';
 
 interface UserListItemProps {

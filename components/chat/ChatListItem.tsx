@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Chat } from '@/hooks/useChats';
-import { Avatar } from './Avatar';
-import { ThemedText } from './ThemedText';
+import { Avatar } from '@/components/Avatar';
+import { ThemedText } from '@/components/common/ThemedText';
 import { User } from '@/hooks/useUser';
 
 interface ChatListItemProps {

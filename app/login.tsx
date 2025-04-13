@@ -3,8 +3,8 @@ import { StyleSheet, FlatList, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAppContext } from '@/hooks/AppContext';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/common/ThemedText';
+import { ThemedView } from '@/components/common/ThemedView';
 import { UserListItem } from '@/components/UserListItem';
 
 export default function LoginScreen() {

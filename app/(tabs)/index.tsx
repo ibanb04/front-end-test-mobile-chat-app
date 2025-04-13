@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, Pressable, Modal } from 'react-native';
 import { useAppContext } from '@/hooks/AppContext';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { ChatListItem } from '@/components/ChatListItem';
+import { ThemedText } from '@/components/common/ThemedText';
+import { ThemedView } from '@/components/common/ThemedView';
+import { ChatListItem } from '@/components/chat/ChatListItem';
 import { UserListItem } from '@/components/UserListItem';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
