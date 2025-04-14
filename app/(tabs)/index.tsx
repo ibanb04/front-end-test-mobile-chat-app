@@ -6,10 +6,12 @@ import { ThemedView } from '@/components/common/ThemedView';
 import { ChatListItem } from '@/components/chat/ChatListItem';
 import { UserListItem } from '@/components/UserListItem';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { SearchModal } from '@/components/chat/SearchModal';
 
 export default function ChatsScreen() {
-  const { currentUser, users, chats, createChat } = useAppContext();
+  const { currentUser, users, chats, createChat, theme } = useAppContext();
   const [modalVisible, setModalVisible] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const toggleUserSelection = (userId: string) => {
@@ -40,12 +42,20 @@ export default function ChatsScreen() {
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title">Chats</ThemedText>
-        <Pressable
-          style={styles.newChatButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <IconSymbol name="add" size={24} color="#007AFF" />
-        </Pressable>
+        <ThemedView style={styles.headerButtons}>
+          <Pressable
+            style={styles.headerButton}
+            onPress={() => setSearchVisible(true)}
+          >
+            <IconSymbol name="search" size={24} color={theme.colors.tint} />
+          </Pressable>
+          <Pressable
+            style={styles.headerButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <IconSymbol name="add" size={24} color={theme.colors.tint} />
+          </Pressable>
+        </ThemedView>
       </ThemedView>
 
       <FlatList
@@ -115,6 +125,11 @@ export default function ChatsScreen() {
           </ThemedView>
         </ThemedView>
       </Modal>
+
+      <SearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+      />
     </ThemedView>
   );
 }
@@ -131,7 +146,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  newChatButton: {
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,

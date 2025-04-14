@@ -4,6 +4,12 @@ import { useChats } from './useChats';
 import type { Chat } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
 import { useDatabase } from './useDatabase';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+
+type Theme = {
+  colors: typeof Colors.light;
+};
 
 type AppContextType = {
   users: User[];
@@ -17,6 +23,7 @@ type AppContextType = {
   markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
   loading: boolean;
   dbInitialized: boolean;
+  theme: Theme;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -25,14 +32,20 @@ function AppContent({ children }: { children: ReactNode }) {
   const { isInitialized } = useDatabase();
   const userContext = useUser();
   const chatContext = useChats(userContext.currentUser?.id || null);
+  const colorScheme = useColorScheme();
   
   const loading = !isInitialized || userContext.loading || chatContext.loading;
+
+  const theme = {
+    colors: Colors[colorScheme ?? 'light']
+  };
 
   const value = {
     ...userContext,
     ...chatContext,
     loading,
     dbInitialized: isInitialized,
+    theme,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
