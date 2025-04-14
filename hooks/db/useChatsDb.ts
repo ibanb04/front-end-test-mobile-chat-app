@@ -274,6 +274,31 @@ export function useChatsDb(currentUserId: string | null) {
         return updatedChats;
       });
       
+       // Simulate message delivery after 1 second
+       setTimeout(async () => {
+        await db.update(messages)
+          .set({ status: 'delivered' })
+          .where(eq(messages.id, messageId));
+          
+        setUserChats(prevChats => {
+          return prevChats.map(chat => {
+            if (chat.id === chatId) {
+              return {
+                ...chat,
+                messages: chat.messages.map(msg => 
+                  msg.id === messageId 
+                    ? { ...msg, status: 'delivered' as const }
+                    : msg
+                ),
+                lastMessage: chat.lastMessage?.id === messageId
+                  ? { ...chat.lastMessage, status: 'delivered' as const }
+                  : chat.lastMessage,
+              };
+            }
+            return chat;
+          });
+        });
+      }, 1000);
       return true;
     } catch (error) {
       console.error('Error sending message in iOS:', error);
