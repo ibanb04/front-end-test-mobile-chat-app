@@ -1,9 +1,13 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Image, Pressable, Modal } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Message } from '@/hooks/useChats';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { MessageStatus } from './MessageStatus';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ImageViewer } from './ImageViewer';
+import { useAppContext } from '@/hooks/AppContext';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 interface MessageBubbleProps {
   message: Message;
@@ -11,40 +15,146 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = useColorScheme() === 'dark';
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
+  const [isVideoViewerVisible, setIsVideoViewerVisible] = useState(false);
+  const { theme } = useAppContext();
+
+  const videoPlayer = useVideoPlayer(
+    message.mediaType === 'video' && message.mediaUrl ? message.mediaUrl : 'https://example.com/placeholder.mp4',
+    player => {
+      player.loop = false;
+    }
+  );
 
   const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  return (
-    <View style={[
-      styles.container,
-      isCurrentUser ? styles.selfContainer : styles.otherContainer
-    ]}>
-      <View style={[
-        styles.bubble,
-        isCurrentUser
-          ? [styles.selfBubble, { backgroundColor: isDark ? '#235A4A' : '#DCF8C6' }]
-          : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#FFFFFF' }]
-      ]}>
-        <ThemedText style={[
-          styles.messageText,
-          isCurrentUser && !isDark && styles.selfMessageText
-        ]}>
-          {message.text}
-        </ThemedText>
-        <View style={styles.footer}>
-          <ThemedText style={styles.timeText}>
-            {formatTime(message.timestamp)}
-          </ThemedText>
+  const formatFileSize = (bytes?: number | null) => {
+    if (!bytes) return '';
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+  };
 
-          {isCurrentUser && <MessageStatus message={message} />}
+  const renderMedia = () => {
+    if (!message.mediaType || !message.mediaUrl) return null;
+
+    switch (message.mediaType) {
+      case 'image':
+        return (
+          <Pressable onPress={() => setIsImageViewerVisible(true)}>
+            <Image
+              source={{ uri: message.mediaUrl }}
+              style={styles.media}
+              resizeMode="cover"
+            />
+          </Pressable>
+        );
+      case 'video':
+        return (
+          <Pressable onPress={() => setIsVideoViewerVisible(true)}>
+            <View style={styles.videoContainer}>
+              <View style={styles.videoThumbnail}>
+                <IconSymbol name="videocam" size={32} color={theme.colors.tint} />
+                <View style={styles.videoInfo}>
+                  <ThemedText style={styles.videoText}>
+                    {message.mediaName || 'Video'}
+                  </ThemedText>
+                  {message.mediaSize && (
+                    <ThemedText style={styles.videoSize}>
+                      {formatFileSize(message.mediaSize)}
+                    </ThemedText>
+                  )}
+                </View>
+              </View>
+            </View>
+          </Pressable>
+        );
+      case 'audio':
+        return (
+          <View style={styles.audioContainer}>
+            <IconSymbol name="musical-note" size={24} color={theme.colors.tint} />
+            <ThemedText style={styles.audioText}>
+              {message.mediaName || 'Audio'}
+            </ThemedText>
+          </View>
+        );
+      case 'file':
+        return (
+          <View style={styles.fileContainer}>
+            <IconSymbol name="document" size={24} color={theme.colors.tint} />
+            <ThemedText style={styles.fileText}>
+              {message.mediaName || 'Archivo'}
+            </ThemedText>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const bubbleStyle = [
+    styles.bubble,
+    isCurrentUser
+      ? [styles.selfBubble, { backgroundColor: isDark ? '#235A4A' : '#DCF8C6' }]
+      : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#FFFFFF' }]
+  ];
+
+  useEffect(() => {
+    if (!isVideoViewerVisible) {
+      videoPlayer.pause();
+    }
+  }, [isVideoViewerVisible]);
+
+  return (
+    <>
+      <View style={[styles.container, isCurrentUser ? styles.selfContainer : styles.otherContainer]}>
+        <View style={bubbleStyle}>
+          {renderMedia()}
+          {message.text && (
+            <ThemedText style={[styles.messageText, isCurrentUser && !isDark && styles.selfMessageText]}>
+              {message.text}
+            </ThemedText>
+          )}
+          <View style={styles.footer}>
+            <ThemedText style={styles.timeText}>
+              {formatTime(message.timestamp)}
+            </ThemedText>
+            {isCurrentUser && <MessageStatus message={message} />}
+          </View>
         </View>
       </View>
-    </View>
+
+      <ImageViewer
+        visible={isImageViewerVisible}
+        onClose={() => setIsImageViewerVisible(false)}
+        imageUri={message.mediaUrl || ''}
+      />
+
+      <Modal
+        visible={isVideoViewerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsVideoViewerVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setIsVideoViewerVisible(false)}
+          >
+            <IconSymbol name="close" size={24} color="#FFFFFF" />
+          </Pressable>
+          <VideoView
+            player={videoPlayer}
+            style={styles.fullScreenVideo}
+            allowsFullscreen
+            allowsPictureInPicture
+          />
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -61,8 +171,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    padding: 12,
     elevation: 1,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -89,5 +198,84 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 11,
     opacity: 0.7,
+  },
+  media: {
+    width: 250,
+    height: 200,
+    borderRadius: 12,
+  },
+  videoContainer: {
+    width: 250,
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
+  },
+  videoThumbnail: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  videoInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  videoText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  videoSize: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    opacity: 0.7,
+  },
+  audioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    marginTop: 4,
+    gap: 8,
+  },
+  audioText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  fileContainer: {
+    width: 250,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    marginBottom: 8,
+  },
+  fileText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 1,
+    padding: 8,
+  },
+  fullScreenVideo: {
+    width: '100%',
+    height: '100%',
   },
 }); 

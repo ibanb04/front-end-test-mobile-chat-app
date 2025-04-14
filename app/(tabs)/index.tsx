@@ -89,7 +89,7 @@ export default function ChatsScreen() {
                 setModalVisible(false);
                 setSelectedUsers([]);
               }}>
-                <IconSymbol name="close" size={24} color="#007AFF" />
+                <IconSymbol name="close" size={24} color={theme.colors.error} />
               </Pressable>
             </ThemedView>
 
@@ -113,6 +113,7 @@ export default function ChatsScreen() {
             <Pressable
               style={[
                 styles.createButton,
+                { backgroundColor: theme.colors.tint },
                 selectedUsers.length === 0 && styles.disabledButton
               ]}
               onPress={handleCreateChat}
@@ -203,7 +204,6 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   createButton: {
-    backgroundColor: '#007AFF',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',

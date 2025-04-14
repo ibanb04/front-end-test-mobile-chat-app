@@ -6,14 +6,14 @@ import { User } from '@/hooks/useUser';
 
 interface UserListItemProps {
   user: User;
-  onSelect?: (user: User) => void;
+  onSelect?: (userId: string) => void;
   isSelected?: boolean;
 }
 
 export function UserListItem({ user, onSelect, isSelected }: UserListItemProps) {
   const handlePress = () => {
     if (onSelect) {
-      onSelect(user);
+      onSelect(user.id);
     }
   };
 

@@ -3,6 +3,8 @@ import { db } from '../../database/db';
 import { chats, chatParticipants, messages, messageReads } from '../../database/schema';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { useDatabaseStatus } from '../../database/DatabaseProvider';
+import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 
 export interface Message {
   id: string;
@@ -11,6 +13,10 @@ export interface Message {
   text: string;
   timestamp: number;
   status: 'sent' | 'delivered' | 'read';
+  mediaType?: 'image' | 'video' | 'audio' | 'file' | null;
+  mediaUrl?: string | null;
+  mediaSize?: number | null;
+  mediaName?: string | null;
   reads?: Array<{
     userId: string;
     timestamp: number;
@@ -119,6 +125,10 @@ export function useChatsDb(currentUserId: string | null) {
               text: m.text,
               timestamp: m.timestamp,
               status: m.status as 'sent' | 'delivered' | 'read',
+              mediaType: m.mediaType as 'image' | 'video' | 'audio' | 'file' | undefined,
+              mediaUrl: m.mediaUrl,
+              mediaSize: m.mediaSize,
+              mediaName: m.mediaName,
               reads: reads.map(r => ({
                 userId: r.userId,
                 timestamp: r.timestamp,
@@ -188,22 +198,49 @@ export function useChatsDb(currentUserId: string | null) {
     }
   }, [currentUserId, isInitialized]);
 
-  const sendMessage = useCallback(async (chatId: string, text: string, senderId: string) => {
-    if (!text.trim()) return false;
+  const sendMessage = useCallback(async (
+    chatId: string,
+    text: string,
+    senderId: string,
+    media?: {
+      type: 'image' | 'video' | 'audio' | 'file';
+      uri: string;
+      name?: string;
+      size?: number;
+    } | null
+  ) => {
+    if (!text.trim() && !media) return false;
     
     try {
       const messageId = `msg${Date.now()}`;
       const timestamp = Date.now();
       
+      // Verificar que el media sea accesible en iOS
+      if (media && Platform.OS === 'ios') {
+        try {
+          const mediaInfo = await FileSystem.getInfoAsync(media.uri);
+          if (!mediaInfo.exists) {
+            throw new Error('El archivo multimedia no existe o no es accesible');
+          }
+        } catch (error) {
+          throw new Error('No se pudo verificar el archivo multimedia');
+        }
+      }
+      
       // Insert new message
-      await db.insert(messages).values({
+      const result = await db.insert(messages).values({
         id: messageId,
         chatId: chatId,
         senderId: senderId,
         text: text,
         timestamp: timestamp,
         status: 'sent',
+        mediaType: media?.type,
+        mediaUrl: media?.uri,
+        mediaSize: media?.size,
+        mediaName: media?.name,
       });
+      
       
       const newMessage: Message = {
         id: messageId,
@@ -212,55 +249,37 @@ export function useChatsDb(currentUserId: string | null) {
         text,
         timestamp,
         status: 'sent',
+        mediaType: media?.type,
+        mediaUrl: media?.uri,
+        mediaSize: media?.size,
+        mediaName: media?.name,
         reads: [],
       };
       
+      
       // Update state
       setUserChats(prevChats => {
-        return prevChats.map(chat => {
+        const updatedChats = prevChats.map(chat => {
           if (chat.id === chatId) {
-            return {
+            const updatedChat = {
               ...chat,
               messages: [...chat.messages, newMessage],
               lastMessage: newMessage,
             };
+            return updatedChat;
           }
           return chat;
         });
+        
+        return updatedChats;
       });
-      
-      // Simulate message delivery after 1 second
-      setTimeout(async () => {
-        await db.update(messages)
-          .set({ status: 'delivered' })
-          .where(eq(messages.id, messageId));
-          
-        setUserChats(prevChats => {
-          return prevChats.map(chat => {
-            if (chat.id === chatId) {
-              return {
-                ...chat,
-                messages: chat.messages.map(msg => 
-                  msg.id === messageId 
-                    ? { ...msg, status: 'delivered' as const }
-                    : msg
-                ),
-                lastMessage: chat.lastMessage?.id === messageId
-                  ? { ...chat.lastMessage, status: 'delivered' as const }
-                  : chat.lastMessage,
-              };
-            }
-            return chat;
-          });
-        });
-      }, 1000);
       
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending message in iOS:', error);
       return false;
     }
-  }, [isInitialized]);
+  }, []);
 
   const markMessageAsRead = useCallback(async (messageId: string, userId: string) => {
     if (!isInitialized) {

@@ -32,10 +32,18 @@ export const ChatListItem = ({ chat, currentUserId, users }: ChatListItemProps) 
   const getMessagePreview = (): string => {
     if (!chat.lastMessage) return 'No messages yet';
 
-    const { text } = chat.lastMessage;
-    if (text.length <= 30) return text;
+    const mediaIcons: Record<string, string> = {
+      image: '🖼️',
+      video: '🎥',
+      audio: '🎵',
+      file: '📄',
+    };
 
-    return `${text.substring(0, 30)}...`;
+    const { mediaType, text } = chat.lastMessage;
+    const icon = mediaType ? mediaIcons[mediaType] : '';
+    const previewText = text ? text.substring(0, 30) : mediaType ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1) : '';
+
+    return `${icon} ${previewText || ''}`.trim();
   };
 
   const getFormattedTime = (): string => {

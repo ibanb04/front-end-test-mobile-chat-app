@@ -17,6 +17,10 @@ export const messages = sqliteTable('messages', {
   text: text('text').notNull(),
   timestamp: integer('timestamp').notNull(),
   status: text('status').notNull(),
+  mediaType: text('media_type'),
+  mediaUrl: text('media_url'),
+  mediaSize: integer('media_size'),
+  mediaName: text('media_name'),
 });
 
 export type DBMessage = typeof messages.$inferSelect;
@@ -69,6 +73,10 @@ export async function initializeDatabase() {
         text TEXT NOT NULL,
         timestamp INTEGER NOT NULL,
         status TEXT NOT NULL DEFAULT 'sent',
+        media_type TEXT,
+        media_url TEXT,
+        media_size INTEGER,
+        media_name TEXT,
         FOREIGN KEY (chat_id) REFERENCES chats (id)
       );
     `);

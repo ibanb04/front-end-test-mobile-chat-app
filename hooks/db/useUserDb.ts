@@ -55,7 +55,7 @@ export function useUserDb() {
         setCurrentUser(user[0]);
         return true;
       }
-      console.log('User not found');
+      console.log('User not found for id:', userId);
       return false;
     } catch (error) {
       console.error('Error during login:', error);
@@ -68,12 +68,14 @@ export function useUserDb() {
     setCurrentUser(null);
   }, []);
 
+  const isLoggedIn = !!currentUser;
+
   return {
     users: allUsers,
     currentUser,
     login,
     logout,
-    isLoggedIn: !!currentUser,
+    isLoggedIn,
     loading: loading || !isInitialized,
   };
 } 

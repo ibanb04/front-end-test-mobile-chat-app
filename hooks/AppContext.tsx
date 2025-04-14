@@ -1,57 +1,84 @@
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useUser, User } from './useUser';
-import { useChats } from './useChats';
-import type { Chat } from './useChats';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useUser } from './useUser';
+import { useChats, type Chat, type Message } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
 import { useDatabase } from './useDatabase';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { useColorScheme } from 'react-native';
 
 type Theme = {
   colors: typeof Colors.light;
 };
 
-type AppContextType = {
-  users: User[];
-  currentUser: User | null;
-  isLoggedIn: boolean;
+interface AppContextType {
+  currentUser: {
+    id: string;
+    name: string;
+    avatar: string;
+    status: 'online' | 'offline' | 'away';
+  } | null;
+  users: Array<{
+    id: string;
+    name: string;
+    avatar: string;
+    status: 'online' | 'offline' | 'away';
+  }>;
+  chats: Chat[];
+  createChat: (participants: string[]) => Promise<Chat | null>;
+  sendMessage: (
+    chatId: string,
+    text: string,
+    senderId: string,
+    media?: {
+      type: 'image' | 'video' | 'audio' | 'file';
+      uri: string;
+      name?: string;
+      size?: number;
+    } | null
+  ) => Promise<boolean>;
+  markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
   login: (userId: string) => Promise<boolean>;
   logout: () => void;
-  chats: Chat[];
-  createChat: (participantIds: string[]) => Promise<Chat | null>;
-  sendMessage: (chatId: string, text: string, senderId: string) => Promise<boolean>;
-  markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
+  isLoggedIn: boolean;
   loading: boolean;
-  dbInitialized: boolean;
   theme: Theme;
-};
+}
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const AppContext = createContext<AppContextType | null>(null);
 
-function AppContent({ children }: { children: ReactNode }) {
+function AppContent({ children }: { children: React.ReactNode }) {
   const { isInitialized } = useDatabase();
-  const userContext = useUser();
-  const chatContext = useChats(userContext.currentUser?.id || null);
+  const { currentUser, users, login, isLoggedIn, loading: userLoading, logout } = useUser();
+  const { chats, createChat, sendMessage, markMessageAsRead, loading: chatsLoading } = useChats(currentUser?.id || null);
   const colorScheme = useColorScheme();
-  
-  const loading = !isInitialized || userContext.loading || chatContext.loading;
+  const loading = !isInitialized || userLoading || chatsLoading;
 
   const theme = {
     colors: Colors[colorScheme ?? 'light']
   };
 
-  const value = {
-    ...userContext,
-    ...chatContext,
-    loading,
-    dbInitialized: isInitialized,
-    theme,
-  };
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider
+      value={{
+        currentUser,
+        users,
+        chats,
+        createChat,
+        sendMessage,
+        markMessageAsRead,
+        login,
+        isLoggedIn,
+        loading,
+        theme,
+        logout,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
 }
 
-export function AppProvider({ children }: { children: ReactNode }) {
+export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <DatabaseProvider>
       <AppContent>{children}</AppContent>
@@ -61,7 +88,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 export function useAppContext() {
   const context = useContext(AppContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;
