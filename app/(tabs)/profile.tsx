@@ -28,7 +28,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
         <ThemedView style={styles.profileHeader}>
-          <Avatar user={currentUser} size={100} />
+          <Avatar uri={currentUser.avatar} fallback={currentUser.name[0]} size={100} />
           <ThemedView style={styles.profileInfo}>
             <ThemedText type="title">{currentUser.name}</ThemedText>
             <ThemedText style={styles.statusText}>

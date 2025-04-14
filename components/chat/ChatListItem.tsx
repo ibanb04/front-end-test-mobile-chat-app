@@ -54,7 +54,8 @@ export const ChatListItem = ({ chat, currentUserId, users }: ChatListItemProps) 
     <Link href={`/ChatRoom?chatId=${chat.id}`} asChild>
       <Pressable style={styles.container}>
         <Avatar
-          user={firstParticipant}
+          uri={firstParticipant?.avatar}
+          fallback={firstParticipant?.name?.[0] || '?'}
           size={50}
         />
 
