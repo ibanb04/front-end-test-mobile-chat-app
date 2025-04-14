@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../database/db';
 import { chats, chatParticipants, messages, messageReads } from '../../database/schema';
-import { eq, and, desc, sql, inArray } from 'drizzle-orm';
+import { eq,  desc,  inArray } from 'drizzle-orm';
 import { useDatabaseStatus } from '../../database/DatabaseProvider';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
@@ -362,11 +362,49 @@ export function useChatsDb(currentUserId: string | null) {
     }
   }, [isInitialized]);
 
+  const deleteMessage = useCallback(async (messageId: string, chatId: string) => {
+    if (!isInitialized) {
+      console.error('Database not initialized');
+      return false;
+    }
+
+    try {
+      // Eliminar el mensaje de la base de datos
+      await db.delete(messages)
+        .where(eq(messages.id, messageId));
+
+      // Actualizar el estado local
+      setUserChats(prevChats => {
+        return prevChats.map(chat => {
+          if (chat.id === chatId) {
+            const updatedMessages = chat.messages.filter(msg => msg.id !== messageId);
+            const lastMessage = updatedMessages.length > 0 
+              ? updatedMessages[updatedMessages.length - 1] 
+              : undefined;
+
+            return {
+              ...chat,
+              messages: updatedMessages,
+              lastMessage
+            };
+          }
+          return chat;
+        });
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      return false;
+    }
+  }, [isInitialized]);
+
   return {
     chats: userChats,
     createChat,
     sendMessage,
     markMessageAsRead,
+    deleteMessage,
     loading: loading || !isInitialized,
   };
 } 

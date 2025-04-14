@@ -41,7 +41,7 @@ interface Media {
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { currentUser, users, chats, sendMessage, markMessageAsRead, theme } = useAppContext();
+  const { currentUser, users, chats, sendMessage, markMessageAsRead, theme, deleteMessage } = useAppContext();
   const [messageText, setMessageText] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<{
     type: 'image' | 'video' | 'audio' | 'file';
@@ -271,11 +271,25 @@ export default function ChatRoomScreen() {
     index,
   }), []);
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!chat) return;
+
+    try {
+      const success = await deleteMessage(messageId, chat.id);
+      if (!success) {
+        Alert.alert('Error', 'No se pudo eliminar el mensaje');
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      Alert.alert('Error', 'Ocurrió un error al eliminar el mensaje');
+    }
+  };
 
   const renderMessage = ({ item }: { item: Message }) => (
     <MessageBubble
       message={item}
       isCurrentUser={item.senderId === currentUser?.id}
+      onDelete={handleDeleteMessage}
     />
   );
 
