@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useUser, User } from './useUser';
-import { useChats, Chat } from './useChats';
+import { useChats } from './useChats';
+import type { Chat } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
 import { useDatabase } from './useDatabase';
 
@@ -13,6 +14,7 @@ type AppContextType = {
   chats: Chat[];
   createChat: (participantIds: string[]) => Promise<Chat | null>;
   sendMessage: (chatId: string, text: string, senderId: string) => Promise<boolean>;
+  markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
   loading: boolean;
   dbInitialized: boolean;
 };

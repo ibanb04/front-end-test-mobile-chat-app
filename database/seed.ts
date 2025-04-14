@@ -40,12 +40,14 @@ const initialChats = [
         senderId: '2',
         text: 'Hey, how are you?',
         timestamp: Date.now() - 3600000,
+        status: 'read' as const,
       },
       {
         id: 'msg2',
         senderId: '1',
         text: 'I\'m good, thanks for asking!',
         timestamp: Date.now() - 1800000,
+        status: 'read' as const,
       },
     ],
   },
@@ -58,6 +60,7 @@ const initialChats = [
         senderId: '3',
         text: 'Did you check the project?',
         timestamp: Date.now() - 86400000,
+        status: 'sent' as const,
       },
     ],
   },
@@ -66,6 +69,7 @@ const initialChats = [
 // Check if there's any data in the users table
 async function isDataSeeded() {
   try {
+    console.log('Checking if database is already seeded...');
     const result = await db.select().from(users);
     return result.length > 0;
   } catch (error) {
@@ -83,7 +87,7 @@ export async function seedDatabase() {
       return;
     }
     
-    console.log('Seeding database...');
+    console.log('Starting database seeding...');
     
     // Insert users
     console.log('Seeding users...');
@@ -116,6 +120,7 @@ export async function seedDatabase() {
           senderId: message.senderId,
           text: message.text,
           timestamp: message.timestamp,
+          status: message.status,
         }).onConflictDoNothing();
       }
     }

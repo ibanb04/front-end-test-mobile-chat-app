@@ -1,77 +1,47 @@
 // This file is a fallback for using MaterialIcons on Android and web.
 
-import { Platform } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import { OpaqueColorValue, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import type { OpaqueColorValue, StyleProp, TextStyle } from 'react-native';
 
-// Mapeo de SF Symbols a MaterialIcons
-const MAPPING = {
-  'house.fill': 'home',
-  'paperplane.fill': 'send',
-  'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
-  'person.fill': 'person',
-  'message.fill': 'message',
-  'arrow.up.circle.fill': 'arrow-upward',
-  'chevron.left': 'chevron-left',
-  'gear': 'settings',
-  'bell.fill': 'notifications',
-  'photo.fill': 'photo',
-  'camera.fill': 'camera',
-  'mic.fill': 'mic',
-  'plus': 'add',
-  'xmark': 'close',
-  'arrow.right.square': 'arrow-forward',
-} as const;
+export type IconName = keyof typeof Ionicons.glyphMap;
 
-export type IconSymbolName = keyof typeof MAPPING;
-
-interface IconSymbolProps {
-  name: IconSymbolName;
+export interface IconSymbolProps {
+  name: IconName;
   size?: number;
-  color: string | OpaqueColorValue;
-  style?: StyleProp<ViewStyle>;
-  weight?: SymbolWeight;
+  color?: string | OpaqueColorValue;
+  style?: StyleProp<TextStyle>;
 }
 
 /**
- * An icon component that uses native SFSymbols on iOS, and MaterialIcons on Android and web. This ensures a consistent look across platforms, and optimal resource usage.
+ * Componente universal para iconos que utiliza Ionicons.
+ * Permite usar cualquier icono disponible en la librería Ionicons.
  *
- * Icon `name`s are based on SFSymbols and require manual mapping to MaterialIcons.
+ * @example
+ * ```tsx
+ * <IconSymbol name="checkmark" size={24} color="#000000" />
+ * ```
+ *
+ * @see https://ionic.io/ionicons para ver todos los iconos disponibles
  */
 export function IconSymbol({
   name,
   size = 24,
-  color,
-  style,
-  weight = 'regular',
+  color = '#000000',
+  style
 }: IconSymbolProps) {
-  if (Platform.OS === 'ios') {
-    return (
-      <SymbolView
-        weight={weight}
-        tintColor={color as string}
-        resizeMode="scaleAspectFit"
-        name={name}
-        style={[
-          {
-            width: size,
-            height: size,
-          },
-          style,
-        ]}
-      />
-    );
-  }
+  const baseStyle = Platform.select({
+    ios: { transform: [{ scale: 1.2 }] },
+    default: {}
+  });
 
   return (
-    <MaterialIcons
-      color={color}
+    <Ionicons
+      name={name}
       size={size}
-      name={MAPPING[name]}
-      style={style as StyleProp<TextStyle>}
+      color={color}
+      style={[baseStyle, style]}
     />
   );
 }

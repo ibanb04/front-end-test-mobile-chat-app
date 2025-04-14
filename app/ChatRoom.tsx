@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,7 +7,9 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView
+  SafeAreaView,
+  ViewToken,
+  ViewabilityConfig
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -17,11 +19,11 @@ import { ThemedView } from '@/components/common/ThemedView';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { Avatar } from '@/components/Avatar';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { Message } from '@/hooks/useChats';
+import type { Message } from '@/hooks/useChats';
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { currentUser, users, chats, sendMessage } = useAppContext();
+  const { currentUser, users, chats, sendMessage, markMessageAsRead } = useAppContext();
   const [messageText, setMessageText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
@@ -29,8 +31,8 @@ export default function ChatRoomScreen() {
   const chat = chats.find(c => c.id === chatId);
 
   const chatParticipants = chat?.participants
-    .filter(id => id !== currentUser?.id)
-    .map(id => users.find(user => user.id === id))
+    .filter((id: string) => id !== currentUser?.id)
+    .map((id: string) => users.find(user => user.id === id))
     .filter(Boolean) || [];
 
   const chatName = chatParticipants.length === 1
@@ -44,6 +46,22 @@ export default function ChatRoomScreen() {
     }
   };
 
+  const onViewableItemsChangedRef = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (!currentUser || !chat) return;
+    viewableItems
+      .filter(({ item, isViewable }) => (
+        isViewable &&
+        item.senderId !== currentUser.id &&
+        item.status !== 'read'
+      ))
+      .forEach(({ item }) => markMessageAsRead(item.id, currentUser.id));
+  });
+
+  const viewabilityConfig = useRef<ViewabilityConfig>({
+    itemVisiblePercentThreshold: 30,
+    minimumViewTime: 500,
+  }).current;
+
   useEffect(() => {
     if (chat?.messages.length && flatListRef.current) {
       setTimeout(() => {
@@ -51,6 +69,22 @@ export default function ChatRoomScreen() {
       }, 100);
     }
   }, [chat?.messages.length]);
+
+  useEffect(() => {
+    if (!currentUser || !chat || chat.messages.length === 0) return;
+
+    const lastMessage = chat.messages[chat.messages.length - 1];
+    if (lastMessage.senderId !== currentUser.id && lastMessage.status !== 'read') {
+      markMessageAsRead(lastMessage.id, currentUser.id);
+    }
+  }, [chat?.messages.length, currentUser, chat]);
+
+  const getItemLayout = useCallback((data: any, index: number) => ({
+    length: 80, // altura estimada de cada mensaje
+    offset: 80 * index,
+    index,
+  }), []);
+
 
   const renderMessage = ({ item }: { item: Message }) => (
     <MessageBubble
@@ -84,7 +118,6 @@ export default function ChatRoomScreen() {
                 <Avatar
                   user={chatParticipants[0]}
                   size={32}
-                  showStatus={false}
                 />
                 <ThemedText type="defaultSemiBold" numberOfLines={1}>
                   {chatName}
@@ -93,7 +126,7 @@ export default function ChatRoomScreen() {
             ),
             headerLeft: () => (
               <Pressable onPress={() => router.back()}>
-                <IconSymbol name="chevron.left" size={24} color="#007AFF" />
+                <IconSymbol name="chevron-back" size={24} color="#007AFF" />
               </Pressable>
             ),
           }}
@@ -110,17 +143,21 @@ export default function ChatRoomScreen() {
               <ThemedText>No messages yet. Say hello!</ThemedText>
             </ThemedView>
           )}
+          inverted={false}
+          windowSize={5}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={30}
+          initialNumToRender={10}
+          removeClippedSubviews={true}
+          getItemLayout={getItemLayout}
+          onEndReachedThreshold={0.5}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }} // para que se mantenga la posición de la lista cuando se carga el chat  
+          viewabilityConfig={viewabilityConfig}
+          onViewableItemsChanged={onViewableItemsChangedRef.current}
           initialScrollIndex={chat.messages.length > 0 ? chat.messages.length - 1 : 0}
-          getItemLayout={(_, index) => ({
-            length: 80,
-            offset: 80 * index,
-            index,
-          })}
-          windowSize={10}// number of items to render before and after the visible area 
-          maxToRenderPerBatch={10}// number of items to render in one batch
-          updateCellsBatchingPeriod={50}// number of milliseconds between each batch of cells that are rendered
-          initialNumToRender={15}// number of items to render when the list is first rendered
-          removeClippedSubviews
         />
 
         <ThemedView style={styles.inputContainer}>
@@ -136,7 +173,7 @@ export default function ChatRoomScreen() {
             onPress={handleSendMessage}
             disabled={!messageText.trim()}
           >
-            <IconSymbol name="arrow.up.circle.fill" size={32} color="#007AFF" />
+            <IconSymbol name="arrow-up-circle" size={32} color="#007AFF" />
           </Pressable>
         </ThemedView>
       </KeyboardAvoidingView>
@@ -190,5 +227,15 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  footerLoader: {
+    borderRadius: 20,
+    padding: 10,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
+    marginRight: 8,
   },
 }); 

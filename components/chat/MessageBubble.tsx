@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Message } from '@/hooks/useChats';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { MessageStatus } from './MessageStatus';
 
 interface MessageBubbleProps {
   message: Message;
@@ -25,7 +26,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     ]}>
       <View style={[
         styles.bubble,
-        isCurrentUser 
+        isCurrentUser
           ? [styles.selfBubble, { backgroundColor: isDark ? '#235A4A' : '#DCF8C6' }]
           : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#FFFFFF' }]
       ]}>
@@ -35,10 +36,12 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         ]}>
           {message.text}
         </ThemedText>
-        <View style={styles.timeContainer}>
+        <View style={styles.footer}>
           <ThemedText style={styles.timeText}>
             {formatTime(message.timestamp)}
           </ThemedText>
+
+          {isCurrentUser && <MessageStatus message={message} />}
         </View>
       </View>
     </View>
@@ -77,9 +80,10 @@ const styles = StyleSheet.create({
   selfMessageText: {
     color: '#000000',
   },
-  timeContainer: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    alignItems: 'center',
     marginTop: 2,
   },
   timeText: {

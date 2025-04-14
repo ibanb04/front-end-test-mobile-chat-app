@@ -1,4 +1,6 @@
-import { useChatsDb, Chat, Message } from './db/useChatsDb';
+import { useState, useEffect, useCallback } from 'react';
+import { useChatsDb } from './db/useChatsDb';
+import type { Message, Chat } from './db/useChatsDb';
 
 export { Chat, Message };
 
@@ -7,7 +9,8 @@ export function useChats(currentUserId: string | null) {
     chats, 
     createChat, 
     sendMessage, 
-    loading 
+    loading,
+    markMessageAsRead
   } = useChatsDb(currentUserId);
 
   // aux function to sort chats by last message timestamp in descending order
@@ -18,11 +21,11 @@ export function useChats(currentUserId: string | null) {
       return lastMessageB - lastMessageA; // descending order
     });
   };
-
   return {
     chats: sortChatsByLastMessage(chats),
     createChat,
     sendMessage,
     loading,
+    markMessageAsRead
   };
 } 
