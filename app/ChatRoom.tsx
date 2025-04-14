@@ -116,7 +116,8 @@ export default function ChatRoomScreen() {
             headerTitle: () => (
               <View style={styles.headerContainer}>
                 <Avatar
-                  user={chatParticipants[0]}
+                  uri={chatParticipants[0]?.avatar}
+                  fallback={chatParticipants[0]?.name[0]}
                   size={32}
                 />
                 <ThemedText type="defaultSemiBold" numberOfLines={1}>

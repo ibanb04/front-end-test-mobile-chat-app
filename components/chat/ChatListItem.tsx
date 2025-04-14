@@ -36,9 +36,9 @@ export function ChatListItem({ chat, currentUserId, users }: ChatListItemProps) 
     <Link href={`/ChatRoom?chatId=${chat.id}`} asChild>
       <Pressable style={styles.container}>
         <Avatar
-          user={chatParticipants[0]}
+          uri={chatParticipants[0]?.avatar}
+          fallback={chatParticipants[0]?.name[0]}
           size={50}
-          showStatus={false}
         />
         <View style={styles.content}>
           <ThemedText style={styles.name}>{chatName}</ThemedText>

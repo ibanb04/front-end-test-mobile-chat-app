@@ -22,7 +22,7 @@ export function UserListItem({ user, onSelect, isSelected }: UserListItemProps) 
       style={[styles.container, isSelected && styles.selectedContainer]} 
       onPress={handlePress}
     >
-      <Avatar user={user} size={50} />
+      <Avatar uri={user.avatar} fallback={user.name[0]} size={50} />
       <View style={styles.infoContainer}>
         <ThemedText type="defaultSemiBold">{user.name}</ThemedText>
         <ThemedText style={styles.statusText}>
