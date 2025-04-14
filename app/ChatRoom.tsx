@@ -30,6 +30,7 @@ import type { Message } from '@/hooks/useChats';
 import { MediaPickerModal } from '@/components/chat/MediaPickerModal';
 import { Avatar } from '@/components/Avatar';
 import * as FileSystem from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 interface Media {
   type: 'image' | 'video' | 'audio' | 'file';
@@ -131,22 +132,35 @@ export default function ChatRoomScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'images',
         allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+        quality: 0.7,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setSelectedMedia({
-          type: 'image',
-          uri: result.assets[0].uri,
-          name: result.assets[0].fileName || '',
-          size: result.assets[0].fileSize,
-        });
-      }
+      if (result.canceled || !result.assets || result.assets.length === 0) return;
+
+      const asset = result.assets[0];
+      const isLargeImage = asset.fileSize && asset.fileSize > 2 * 1024 * 1024;
+
+      const media = isLargeImage
+        ? await compressImage(asset)
+        : { uri: asset.uri, name: asset.fileName || '', size: asset.fileSize };
+
+      setSelectedMedia({ type: 'image', ...media });
     } catch (error) {
-      console.error('Error picking image:', error);
+      console.error('Error al seleccionar la imagen:', error);
       Alert.alert('Error', 'No se pudo seleccionar la imagen. Por favor, inténtalo de nuevo.');
     }
+  };
+
+  const compressImage = async (asset: ImagePicker.ImagePickerAsset) => {
+    const context = ImageManipulator.manipulate(asset.uri);
+    const image = await context
+      .resize({ width: 1024 })
+      .renderAsync();
+    const result = await image.saveAsync({
+      compress: 0.6,
+      format: SaveFormat.JPEG
+    });
+    return { uri: result.uri, name: asset.fileName || '', size: asset.fileSize };
   };
 
   const pickVideo = async () => {
