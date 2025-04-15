@@ -15,9 +15,7 @@ export const useMessageSearch = () => {
   const getChatName = useCallback((chatId: string) => {
     const chat = chats.find(c => c.id === chatId);
     if (!chat || chat.participants.length < 2) return 'Unknown';
-
-    const secondParticipant = users.find(u => u.id === chat.participants[1]);
-    return secondParticipant?.name || 'Unknown';
+    return chat.participants[1].name || 'Unknown';
   }, [chats, users]);
 
   const search = useCallback(async (query: string, chatId?: string) => {

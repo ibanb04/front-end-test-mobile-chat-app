@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, Pressable, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Image, Pressable, Modal, Alert, Animated } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Message } from '@/interfaces/chatTypes';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -12,13 +12,15 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 interface MessageBubbleProps {
   message: Message;
   isCurrentUser: boolean;
+  onDelete?: (messageId: string) => void;
 }
 
-export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbleProps) {
   const isDark = useColorScheme() === 'dark';
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
   const [isVideoViewerVisible, setIsVideoViewerVisible] = useState(false);
   const { theme } = useAppContext();
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const videoPlayer = useVideoPlayer(
     message.mediaType === 'video' && message.mediaUrl ? message.mediaUrl : 'https://example.com/placeholder.mp4',
@@ -102,6 +104,34 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
       : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#FFFFFF' }]
   ];
 
+  const handleLongPress = () => {
+    if (isCurrentUser) {
+      Alert.alert(
+        'Eliminar mensaje',
+        '¿Estás seguro de que quieres eliminar este mensaje?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Eliminar',
+            style: 'destructive',
+            onPress: () => {
+              Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+              }).start(() => {
+                onDelete?.(message.id);
+              });
+            },
+          },
+        ]
+      );
+    }
+  };
+
   useEffect(() => {
     if (!isVideoViewerVisible) {
       videoPlayer.pause();
@@ -110,22 +140,32 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
 
   return (
     <>
-      <View style={[styles.container, isCurrentUser ? styles.selfContainer : styles.otherContainer]}>
-        <View style={bubbleStyle}>
-          {renderMedia()}
-          {message.text && (
-            <ThemedText style={[styles.messageText, isCurrentUser && !isDark && styles.selfMessageText]}>
-              {message.text}
-            </ThemedText>
-          )}
-          <View style={styles.footer}>
-            <ThemedText style={styles.timeText}>
-              {formatTime(message.timestamp)}
-            </ThemedText>
-            {isCurrentUser && <MessageStatus message={message} />}
+      <Animated.View style={{ opacity: fadeAnim }}>
+        <Pressable 
+          onLongPress={handleLongPress}
+          delayLongPress={500}
+          style={[styles.container, isCurrentUser ? styles.selfContainer : styles.otherContainer]}
+        >
+          <View style={bubbleStyle}>
+            {renderMedia()}
+            {message.text && (
+              <ThemedText style={[styles.messageText, isCurrentUser && !isDark && styles.selfMessageText]}>
+                {message.text}
+              </ThemedText>
+            )}
+            <View style={styles.footer}>
+              <ThemedText style={styles.timeText}>
+                {formatTime(message.timestamp)}
+              </ThemedText>
+              {isCurrentUser && (
+                <View style={styles.footerActions}>
+                  <MessageStatus message={message} />
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Animated.View>
 
       <ImageViewer
         visible={isImageViewerVisible}
@@ -277,5 +317,10 @@ const styles = StyleSheet.create({
   fullScreenVideo: {
     width: '100%',
     height: '100%',
+  },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 }); 

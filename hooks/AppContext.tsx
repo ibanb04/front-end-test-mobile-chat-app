@@ -1,4 +1,4 @@
-import React, { createContext, useContext, } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useUser } from './useUser';
 import { useChats } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
@@ -22,6 +22,7 @@ interface AppContextType {
     media?: Media | null
   ) => Promise<boolean>;
   markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
+  deleteMessage: (messageId: string, chatId: string) => Promise<boolean>;
   login: (userId: string) => Promise<boolean>;
   logout: () => void;
   isLoggedIn: boolean;
@@ -34,30 +35,31 @@ const AppContext = createContext<AppContextType | null>(null);
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isInitialized } = useDatabase();
   const { currentUser, users, login, isLoggedIn, loading: userLoading, logout } = useUser();
-  const { chats, createChat, sendMessage, markMessageAsRead, loading: chatsLoading } = useChats(currentUser?.id || null);
+  const { chats, createChat, sendMessage, markMessageAsRead, loading: chatsLoading, deleteMessage } = useChats(currentUser?.id || null);
   const colorScheme = useColorScheme();
-  const loading = !isInitialized || userLoading || chatsLoading;
+  const loading = useMemo(() => !isInitialized || userLoading || chatsLoading, [isInitialized, userLoading, chatsLoading]);
 
-  const theme = {
+  const theme = useMemo(() => ({
     colors: Colors[colorScheme ?? 'light']
+  }), [colorScheme]);
+
+  const contextValue = {
+    currentUser,
+    users,
+    chats,
+    createChat,
+    sendMessage,
+    markMessageAsRead,
+    login,
+    isLoggedIn,
+    loading,
+    theme,
+    logout,
+    deleteMessage,
   };
 
   return (
-    <AppContext.Provider
-      value={{
-        currentUser,
-        users,
-        chats,
-        createChat,
-        sendMessage,
-        markMessageAsRead,
-        login,
-        isLoggedIn,
-        loading,
-        theme,
-        logout,
-      }}
-    >
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

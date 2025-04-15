@@ -65,7 +65,6 @@ export default function ChatsScreen() {
           <ChatListItem
             chat={item}
             currentUserId={currentUser?.id || ''}
-            users={users}
           />
         )}
         ListEmptyComponent={renderEmptyComponent}

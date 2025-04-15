@@ -8,14 +8,10 @@ import { Chat, User } from '@/interfaces/chatTypes';
 interface ChatListItemProps {
   chat: Chat;
   currentUserId: string;
-  users: User[];
 }
 
-
-export const ChatListItem = ({ chat, currentUserId, users }: ChatListItemProps) => {
-  const otherParticipants = users.filter(user =>
-    chat.participants.includes(user.id) && user.id !== currentUserId
-  );
+export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
+  const otherParticipants = chat.participants.filter(user => user.id !== currentUserId);
 
   const firstParticipant = otherParticipants[0];
   const otherParticipantsCount = otherParticipants.length - 1;

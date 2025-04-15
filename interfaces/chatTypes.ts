@@ -17,7 +17,7 @@ export interface Message {
   
   export interface Chat {
     id: string;
-    participants: string[];
+    participants: User[];
     messages: Message[];
     lastMessage?: Message;
 }
