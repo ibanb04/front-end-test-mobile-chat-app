@@ -3,7 +3,7 @@ import { useUser } from './useUser';
 import { useChats } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
 import { useDatabase } from './useDatabase';
-import { Colors } from '@/constants/Colors';
+import { Colors } from '@/styles/theme/Colors';
 import { useColorScheme } from 'react-native';
 import { Chat, Media, User, } from '@/interfaces/chatTypes';
 type Theme = {

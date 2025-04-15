@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
-  StyleSheet,
   FlatList,
   TextInput,
   Pressable,
@@ -31,18 +30,13 @@ import { Avatar } from '@/components/Avatar';
 import * as FileSystem from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Media, Message } from '@/interfaces/chatTypes';
-
+import { chatRoomScreenStyles } from '@/styles/screens/chatRoomScreenStyles.styles';
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const { currentUser, chats, sendMessage, markMessageAsRead, theme, deleteMessage } = useAppContext();
   const [messageText, setMessageText] = useState('');
-  const [selectedMedia, setSelectedMedia] = useState<{
-    type: 'image' | 'video' | 'audio' | 'file';
-    uri: string;
-    name?: string;
-    size?: number;
-  } | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
@@ -291,19 +285,19 @@ export default function ChatRoomScreen() {
 
   if (!chat || !currentUser) {
     return (
-      <ThemedView style={styles.centerContainer}>
+      <ThemedView style={chatRoomScreenStyles.centerContainer}>
         <ThemedText>Chat not found</ThemedText>
       </ThemedView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={chatRoomScreenStyles.container}>
       <StatusBar style="auto" />
       <Stack.Screen
         options={{
           headerTitle: () => (
-            <View style={styles.headerContainer}>
+            <View style={chatRoomScreenStyles.headerContainer}>
               <Avatar
                 uri={chat?.participants[1]?.avatar}
                 fallback={chat?.participants[1]?.name[1]}
@@ -323,7 +317,7 @@ export default function ChatRoomScreen() {
       />
 
       <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: theme.colors.backgroundChat }]}
+        style={[chatRoomScreenStyles.container, { backgroundColor: theme.colors.backgroundChat }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -332,9 +326,9 @@ export default function ChatRoomScreen() {
           data={chat.messages}
           keyExtractor={keyExtractor}
           renderItem={renderMessage}
-          contentContainerStyle={styles.messagesContainer}
+          contentContainerStyle={chatRoomScreenStyles.messagesContainer}
           ListEmptyComponent={() => (
-            <ThemedView style={styles.emptyContainer}>
+            <ThemedView style={chatRoomScreenStyles.emptyContainer}>
               <ThemedText>No messages yet. Say hello!</ThemedText>
             </ThemedView>
           )}
@@ -358,31 +352,31 @@ export default function ChatRoomScreen() {
         />
 
         {selectedMedia && (
-          <ThemedView style={styles.mediaPreviewContainer}>
-            <Pressable style={styles.removeMediaButton} onPress={removeSelectedMedia}>
+          <ThemedView style={chatRoomScreenStyles.mediaPreviewContainer}>
+            <Pressable style={chatRoomScreenStyles.removeMediaButton} onPress={removeSelectedMedia}>
               <IconSymbol name="close" size={24} color={theme.colors.error} />
             </Pressable>
             {selectedMedia.type === 'image' && (
               <Image
                 source={{ uri: selectedMedia.uri }}
-                style={styles.mediaPreview}
+                style={chatRoomScreenStyles.mediaPreview}
                 resizeMode="cover"
               />
             )}
             {selectedMedia.type === 'video' && (
-              <View style={styles.videoPreviewContainer}>
+              <View style={chatRoomScreenStyles.videoPreviewContainer}>
                 <VideoView
                   player={videoPlayer}
-                  style={styles.videoPreview}
+                  style={chatRoomScreenStyles.videoPreview}
                   allowsFullscreen
                   allowsPictureInPicture
                 />
-                <View style={styles.videoInfoContainer}>
-                  <ThemedText style={styles.videoPreviewText}>
+                <View style={chatRoomScreenStyles.videoInfoContainer}>
+                  <ThemedText style={chatRoomScreenStyles.videoPreviewText}>
                     {selectedMedia.name || 'Video'}
                   </ThemedText>
                   {selectedMedia.size && (
-                    <ThemedText style={styles.videoPreviewSize}>
+                    <ThemedText style={chatRoomScreenStyles.videoPreviewSize}>
                       {formatFileSize(selectedMedia.size)}
                     </ThemedText>
                   )}
@@ -390,14 +384,14 @@ export default function ChatRoomScreen() {
               </View>
             )}
             {selectedMedia.type === 'file' && (
-              <View style={styles.filePreview}>
+              <View style={chatRoomScreenStyles.filePreview}>
                 <IconSymbol name="document" size={32} color={theme.colors.tint} />
-                <View style={styles.fileInfo}>
-                  <ThemedText style={styles.filePreviewText}>
+                <View style={chatRoomScreenStyles.fileInfo}>
+                  <ThemedText style={chatRoomScreenStyles.filePreviewText}>
                     {selectedMedia.name || 'Archivo'}
                   </ThemedText>
                   {selectedMedia.size && (
-                    <ThemedText style={styles.filePreviewSize}>
+                    <ThemedText style={chatRoomScreenStyles.filePreviewSize}>
                       {formatFileSize(selectedMedia.size)}
                     </ThemedText>
                   )}
@@ -407,17 +401,17 @@ export default function ChatRoomScreen() {
           </ThemedView>
         )}
 
-        <ThemedView style={[styles.inputContainer]}>
-          <View style={styles.inputButtonsContainer}>
+        <ThemedView style={[chatRoomScreenStyles.inputContainer]}>
+          <View style={chatRoomScreenStyles.inputButtonsContainer}>
             <Pressable
-              style={styles.mediaButton}
+              style={chatRoomScreenStyles.mediaButton}
               onPress={showMediaOptions}
               disabled={isSending}
             >
               <IconSymbol name="attach" size={24} color={theme.colors.tint} />
             </Pressable>
             <Pressable
-              style={styles.mediaButton}
+              style={chatRoomScreenStyles.mediaButton}
               onPress={pickImage}
               disabled={isSending}
             >
@@ -426,7 +420,7 @@ export default function ChatRoomScreen() {
 
           </View>
           <TextInput
-            style={[styles.input, {
+            style={[chatRoomScreenStyles.input, {
               backgroundColor: theme.colors.backgroundChat,
               borderColor: theme.colors.border,
               color: theme.colors.text,
@@ -440,9 +434,9 @@ export default function ChatRoomScreen() {
           />
           <Pressable
             style={[
-              styles.sendButton,
-              (!messageText.trim() && !selectedMedia) && styles.disabledButton,
-              isSending && styles.sendingButton
+              chatRoomScreenStyles.sendButton,
+              (!messageText.trim() && !selectedMedia) && chatRoomScreenStyles.disabledButton,
+              isSending && chatRoomScreenStyles.sendingButton
             ]}
             onPress={handleSendMessage}
             disabled={(!messageText.trim() && !selectedMedia) || isSending}
@@ -466,147 +460,3 @@ export default function ChatRoomScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  messagesContainer: {
-    padding: 10,
-    flexGrow: 1,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 10,
-    alignItems: 'flex-end',
-    // borderTopWidth: 0.2,
-    borderTopColor: '#E1E1E1',
-  },
-  inputButtonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  mediaButton: {
-    marginRight: 8,
-    padding: 4,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    // borderColor: '#E1E1E1',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    maxHeight: 100,
-    // backgroundColor: '#FFFFFF',
-  },
-  sendButton: {
-    marginLeft: 8,
-    padding: 4,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  footerLoader: {
-    borderRadius: 20,
-    padding: 10,
-    alignItems: 'center',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 8,
-    marginRight: 8,
-  },
-  mediaPreviewContainer: {
-    marginHorizontal: 12,
-    marginBottom: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  mediaPreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-  },
-  removeMediaButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    zIndex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
-    padding: 4,
-  },
-  sendingButton: {
-    opacity: 0.5,
-  },
-  videoPreviewContainer: {
-    width: '100%',
-    height: 200,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  videoPreview: {
-    width: '100%',
-    height: '100%',
-  },
-  videoInfoContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 8,
-    backgroundColor: '#fff',
-  },
-  videoPreviewText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
-  },
-  videoPreviewSize: {
-    fontSize: 14,
-    opacity: 0.7,
-    color: '#FFFFFF',
-  },
-  filePreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 12,
-    gap: 12,
-    width: '100%',
-  },
-  fileInfo: {
-    flex: 1,
-    flexShrink: 1,
-  },
-  filePreviewText: {
-    fontSize: 14,
-    color: '#000000',
-    flexWrap: 'wrap',
-  },
-  filePreviewSize: {
-    fontSize: 12,
-    color: '#666666',
-    marginTop: 4,
-  },
-}); 

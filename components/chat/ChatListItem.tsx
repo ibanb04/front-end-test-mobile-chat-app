@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Link } from 'expo-router';
 import { Avatar } from '@/components/Avatar';
 import { ThemedText } from '@/components/common/ThemedText';
 import { MessageStatus } from './MessageStatus';
 import { Chat } from '@/interfaces/chatTypes';
 import { useAppContext } from '@/hooks/AppContext';
+import { chatListItemStyles } from '@/styles/components/chatListItem.styles';
 interface ChatListItemProps {
   chat: Chat;
   currentUserId: string;
@@ -59,7 +60,7 @@ export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
       <Pressable style={{
         borderBottomWidth: 0.2,
         borderBottomColor: theme.colors.border,
-        ...styles.container
+        ...chatListItemStyles.container
       }}>
         <Avatar
           uri={firstParticipant?.avatar}
@@ -67,22 +68,22 @@ export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
           size={50}
         />
 
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <ThemedText style={styles.name} numberOfLines={1}>
+        <View style={chatListItemStyles.content}>
+          <View style={chatListItemStyles.header}>
+            <ThemedText style={chatListItemStyles.name} numberOfLines={1}>
               {getChatName()}
             </ThemedText>
 
             {chat.lastMessage && (
-              <ThemedText style={styles.time}>
+              <ThemedText style={chatListItemStyles.time}>
                 {getFormattedTime()}
               </ThemedText>
             )}
           </View>
 
-          <View style={styles.messagePreview}>
+          <View style={chatListItemStyles.messagePreview}>
             <ThemedText
-              style={[styles.preview, isUnread && { color: theme.colors.primary }]}
+              style={[chatListItemStyles.preview, isUnread && { color: theme.colors.primary }]}
               numberOfLines={1}
             >
               {getMessagePreview()}
@@ -98,41 +99,3 @@ export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    padding: 12,
-    alignItems: 'center',
-  },
-  content: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: 8,
-  },
-  time: {
-    fontSize: 12,
-    color: '#8E8E93',
-  },
-  messagePreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  preview: {
-    fontSize: 14,
-    color: '#8E8E93',
-    flex: 1,
-    marginRight: 4,
-  },
-
-});

@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   TextInput,
-  StyleSheet,
   Pressable,
   ActivityIndicator,
   FlatList,
@@ -13,6 +12,7 @@ import { ThemedText } from '@/components/common/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useRouter } from 'expo-router';
 import { useAppContext } from '@/hooks/AppContext';
+import { messageSearchStyles } from '@/styles/components/messageSearch.styles';
 
 interface MessageSearchProps {
   chatId?: string;
@@ -85,20 +85,20 @@ export const MessageSearch = ({ chatId, onClose }: MessageSearchProps) => {
 
   const renderItem: ListRenderItem<SearchResult> = useCallback(({ item }) => (
     <Pressable
-      style={[styles.resultItem, { borderBottomColor: theme.colors.border }]}
+      style={[messageSearchStyles.resultItem, { borderBottomColor: theme.colors.border }]}
       onPress={() => handleResultPress(item.chatId)}
     >
-      <View style={styles.resultContent}>
-        <View style={styles.messageInfo}>
-          <ThemedText style={styles.chatName}>
+      <View style={messageSearchStyles.resultContent}>
+        <View style={messageSearchStyles.messageInfo}>
+          <ThemedText style={messageSearchStyles.chatName}>
             {item.chatName}
           </ThemedText>
-          <ThemedText style={[styles.timestamp, { color: theme.colors.textSecondary }]}>
+          <ThemedText style={[messageSearchStyles.timestamp, { color: theme.colors.textSecondary }]}>
             {formatDate(item.timestamp)}
           </ThemedText>
         </View>
         <ThemedText
-          style={[styles.messageText, { color: theme.colors.textSecondary }]}
+          style={[messageSearchStyles.messageText, { color: theme.colors.textSecondary }]}
           numberOfLines={2}
         >
           {item.text}
@@ -113,12 +113,11 @@ export const MessageSearch = ({ chatId, onClose }: MessageSearchProps) => {
   // Renderizar el contenido según el estado
   const renderContent = useMemo(() => {
     if (error) {
-      return <ThemedText style={styles.error}>{error}</ThemedText>;
+      return <ThemedText style={messageSearchStyles.error}>{error}</ThemedText>;
     }
 
-    if (isSearching) {
-      return <ActivityIndicator style={styles.loader} color={theme.colors.primary} />;
-    }
+    if (isSearching) return <ActivityIndicator style={messageSearchStyles.loader} color={theme.colors.primary} />;
+
 
     if (results.length > 0) {
       return (
@@ -126,16 +125,16 @@ export const MessageSearch = ({ chatId, onClose }: MessageSearchProps) => {
           data={results}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          contentContainerStyle={styles.resultsList}
+          contentContainerStyle={messageSearchStyles.resultsList}
         />
       );
     }
 
     if (searchText) {
       return (
-        <View style={styles.noResultsContainer}>
+        <View style={messageSearchStyles.noResultsContainer}>
           <IconSymbol name="search" size={48} color={theme.colors.textSecondary} />
-          <ThemedText style={[styles.noResults, { color: theme.colors.textSecondary }]}>
+          <ThemedText style={[messageSearchStyles.noResults, { color: theme.colors.textSecondary }]}>
             No messages found
           </ThemedText>
         </View>
@@ -143,14 +142,23 @@ export const MessageSearch = ({ chatId, onClose }: MessageSearchProps) => {
     }
 
     return null;
-  }, [error, isSearching, results, searchText, renderItem, keyExtractor, theme.colors.primary, theme.colors.textSecondary]);
+  },
+    [
+      error,
+      isSearching,
+      results, searchText,
+      renderItem,
+      keyExtractor,
+      theme.colors.primary,
+      theme.colors.textSecondary
+    ]);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.searchBar, { borderBottomColor: theme.colors.border }]}>
+    <View style={messageSearchStyles.container}>
+      <View style={[messageSearchStyles.searchBar, { borderBottomColor: theme.colors.border }]}>
         <IconSymbol name="search" size={20} color={theme.colors.textSecondary} />
         <TextInput
-          style={[styles.input, { color: theme.colors.text }]}
+          style={[messageSearchStyles.input, { color: theme.colors.text }]}
           value={searchText}
           onChangeText={handleSearch}
           placeholder="Search messages..."
@@ -169,69 +177,3 @@ export const MessageSearch = ({ chatId, onClose }: MessageSearchProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  input: {
-    flex: 1,
-    fontSize: 17,
-    marginHorizontal: 8,
-    paddingVertical: 8,
-  },
-  resultsList: {
-    paddingTop: 8,
-  },
-  resultItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  resultContent: {
-    flex: 1,
-  },
-  messageInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  chatName: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: 8,
-  },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  timestamp: {
-    fontSize: 12,
-  },
-  loader: {
-    marginTop: 20,
-  },
-  error: {
-    color: '#FF3B30',
-    textAlign: 'center',
-    margin: 16,
-  },
-  noResultsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: '20%',
-  },
-  noResults: {
-    marginTop: 12,
-    fontSize: 15,
-  },
-}); 

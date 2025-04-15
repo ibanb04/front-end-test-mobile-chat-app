@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Avatar } from '@/components/Avatar';
 import { User } from '@/interfaces/chatTypes';
 import { useAppContext } from '@/hooks/AppContext';
+import { userListItemStyles } from '@/styles/components/userListItemStyles';
 
 interface UserListItemProps {
   user: User;
@@ -21,13 +22,17 @@ export function UserListItem({ user, onSelect, isSelected }: UserListItemProps) 
 
   return (
     <Pressable
-      style={[styles.container, { borderBottomColor: theme.colors.border }, isSelected && styles.selectedContainer, ]}
+      style={[
+        userListItemStyles.container,
+        { borderBottomColor: theme.colors.border },
+        isSelected && userListItemStyles.selectedContainer,
+      ]}
       onPress={handlePress}
     >
       <Avatar uri={user.avatar} fallback={user.name[0]} size={50} />
-      <View style={styles.infoContainer}>
+      <View style={userListItemStyles.infoContainer}>
         <ThemedText type="defaultSemiBold">{user.name}</ThemedText>
-        <ThemedText style={styles.statusText}>
+        <ThemedText style={userListItemStyles.statusText}>
           {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
         </ThemedText>
       </View>
@@ -35,26 +40,3 @@ export function UserListItem({ user, onSelect, isSelected }: UserListItemProps) 
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-      borderBottomWidth: 0.2,
-  },
-  selectedContainer: {
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    borderRadius: 10,
-    marginBottom: 10,
-
-  },
-  infoContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  statusText: {
-    fontSize: 14,
-    color: '#8F8F8F',
-    marginTop: 4,
-  },
-}); 

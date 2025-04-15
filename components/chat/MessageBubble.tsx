@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, Pressable, Modal, Alert, Animated } from 'react-native';
+import { View, Image, Pressable, Modal, Alert, Animated } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Message } from '@/interfaces/chatTypes';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -8,7 +8,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { ImageViewer } from './ImageViewer';
 import { useAppContext } from '@/hooks/AppContext';
 import { useVideoPlayer, VideoView } from 'expo-video';
-
+import { messageBubbleStyles } from '@/styles/components/messageBubble.styles';
 interface MessageBubbleProps {
   message: Message;
   isCurrentUser: boolean;
@@ -49,7 +49,7 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
           <Pressable onPress={() => setIsImageViewerVisible(true)}>
             <Image
               source={{ uri: message.mediaUrl }}
-              style={styles.media}
+              style={messageBubbleStyles.media}
               resizeMode="cover"
             />
           </Pressable>
@@ -57,15 +57,15 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
       case 'video':
         return (
           <Pressable onPress={() => setIsVideoViewerVisible(true)}>
-            <View style={styles.videoContainer}>
-              <View style={styles.videoThumbnail}>
+            <View style={messageBubbleStyles.videoContainer}>
+              <View style={messageBubbleStyles.videoThumbnail}>
                 <IconSymbol name="videocam" size={32} color={theme.colors.tint} />
-                <View style={styles.videoInfo}>
-                  <ThemedText style={styles.videoText}>
+                <View style={messageBubbleStyles.videoInfo}>
+                  <ThemedText style={messageBubbleStyles.videoText}>
                     {message.mediaName || 'Video'}
                   </ThemedText>
                   {message.mediaSize && (
-                    <ThemedText style={styles.videoSize}>
+                    <ThemedText style={messageBubbleStyles.videoSize}>
                       {formatFileSize(message.mediaSize)}
                     </ThemedText>
                   )}
@@ -76,18 +76,18 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
         );
       case 'audio':
         return (
-          <View style={styles.audioContainer}>
+          <View style={messageBubbleStyles.audioContainer}>
             <IconSymbol name="musical-note" size={24} color={theme.colors.tint} />
-            <ThemedText style={styles.audioText}>
+            <ThemedText style={messageBubbleStyles.audioText}>
               {message.mediaName || 'Audio'}
             </ThemedText>
           </View>
         );
       case 'file':
         return (
-          <View style={styles.fileContainer}>
+          <View style={messageBubbleStyles.fileContainer}>
             <IconSymbol name="document" size={24} color={theme.colors.tint} />
-            <ThemedText style={styles.fileText}>
+            <ThemedText style={messageBubbleStyles.fileText}>
               {message.mediaName || 'Archivo'}
             </ThemedText>
           </View>
@@ -98,10 +98,10 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
   };
 
   const bubbleStyle = [
-    styles.bubble,
+    messageBubbleStyles.bubble,
     isCurrentUser
-      ? [styles.selfBubble, { backgroundColor: isDark ? '#E2E2B6' : '#E2E2B6' }]
-      : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#ffff' }]
+      ? [messageBubbleStyles.selfBubble, { backgroundColor: isDark ? '#E2E2B6' : '#E2E2B6' }]
+      : [messageBubbleStyles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#ffff' }]
   ];
 
   const handleLongPress = () => {
@@ -144,21 +144,21 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
         <Pressable
           onLongPress={handleLongPress}
           delayLongPress={500}
-          style={[styles.container, isCurrentUser ? styles.selfContainer : styles.otherContainer]}
+          style={[messageBubbleStyles.container, isCurrentUser ? messageBubbleStyles.selfContainer : messageBubbleStyles.otherContainer]}
         >
           <View style={bubbleStyle}>
             {renderMedia()}
             {message.text && (
-              <ThemedText style={[styles.messageText, isCurrentUser && { color: '#000000' }]}>
+              <ThemedText style={[messageBubbleStyles.messageText, isCurrentUser && { color: '#000000' }]}>
                 {message.text}
               </ThemedText>
             )}
-            <View style={styles.footer}>
-              <ThemedText style={[styles.timeText, isCurrentUser && { color: '#000000' }]}>
+            <View style={messageBubbleStyles.footer}>
+              <ThemedText style={[messageBubbleStyles.timeText, isCurrentUser && { color: '#000000' }]}>
                 {formatTime(message.timestamp)}
               </ThemedText>
               {isCurrentUser && (
-                <View style={styles.footerActions}>
+                <View style={messageBubbleStyles.footerActions}>
                   <MessageStatus message={message} />
                 </View>
               )}
@@ -166,29 +166,27 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
           </View>
         </Pressable>
       </Animated.View>
-
       <ImageViewer
         visible={isImageViewerVisible}
         onClose={() => setIsImageViewerVisible(false)}
         imageUri={message.mediaUrl || ''}
       />
-
       <Modal
         visible={isVideoViewerVisible}
         transparent={true}
         animationType="fade"
         onRequestClose={() => setIsVideoViewerVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <View style={messageBubbleStyles.modalContainer}>
           <Pressable
-            style={styles.closeButton}
+            style={messageBubbleStyles.closeButton}
             onPress={() => setIsVideoViewerVisible(false)}
           >
             <IconSymbol name="close" size={24} color="#FFFFFF" />
           </Pressable>
           <VideoView
             player={videoPlayer}
-            style={styles.fullScreenVideo}
+            style={messageBubbleStyles.fullScreenVideo}
             allowsFullscreen
             allowsPictureInPicture
           />
@@ -198,129 +196,3 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 4,
-    maxWidth: '80%',
-  },
-  selfContainer: {
-    alignSelf: 'flex-end',
-  },
-  otherContainer: {
-    alignSelf: 'flex-start',
-  },
-  bubble: {
-    borderRadius: 16,
-    padding: 12,
-    elevation: 1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  selfBubble: {
-    borderBottomRightRadius: 4,
-  },
-  otherBubble: {
-    borderBottomLeftRadius: 4,
-  },
-  messageText: {
-    fontSize: 16,
-  },
-  selfMessageText: {
-    color: '#000000',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  timeText: {
-    fontSize: 11,
-    opacity: 0.7,
-  },
-  media: {
-    width: 250,
-    height: 200,
-    borderRadius: 12,
-  },
-  videoContainer: {
-    width: 250,
-    height: 200,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
-  },
-  videoThumbnail: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
-  },
-  videoInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 8,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  videoText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
-  videoSize: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    opacity: 0.7,
-  },
-  audioContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#000000',
-    borderRadius: 8,
-    marginTop: 4,
-    gap: 8,
-  },
-  audioText: {
-    flex: 1,
-    fontSize: 14,
-  },
-  fileContainer: {
-    width: 250,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    marginBottom: 8,
-  },
-  fileText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1,
-    padding: 8,
-  },
-  fullScreenVideo: {
-    width: '100%',
-    height: '100%',
-  },
-  footerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-}); 

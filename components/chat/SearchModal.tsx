@@ -5,7 +5,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useAppContext } from '@/hooks/AppContext';
 import { ThemedText } from '@/components/common/ThemedText';
 import { BlurView } from 'expo-blur';
-
+import { searchModalStyles } from '@/styles/components/searchModal.styles';
 interface SearchModalProps {
     visible: boolean;
     onClose: () => void;
@@ -31,21 +31,21 @@ export const SearchModal = ({ visible, onClose, chatId }: SearchModalProps) => {
             transparent={isTransparent}
         >
             <View style={[
-                styles.container,
+                searchModalStyles.container,
                 Platform.OS === 'android' && { backgroundColor: theme.colors.background }
             ]}>
                 {renderBackground()}
 
-                <SafeAreaView style={styles.safeArea}>
-                    <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
-                        <Pressable onPress={onClose} style={styles.backButton}>
+                <SafeAreaView style={searchModalStyles.safeArea}>
+                    <View style={[searchModalStyles.header, { borderBottomColor: theme.colors.border }]}>
+                        <Pressable onPress={onClose} style={searchModalStyles.backButton}>
                             <IconSymbol name="chevron-back" size={24} color={theme.colors.primary} />
                         </Pressable>
-                        <ThemedText style={styles.title}>Search Messages</ThemedText>
-                        <View style={styles.placeholder} />
+                        <ThemedText style={searchModalStyles.title}>Search Messages</ThemedText>
+                        <View style={searchModalStyles.placeholder} />
                     </View>
 
-                    <View style={styles.content}>
+                    <View style={searchModalStyles.content}>
                         <MessageSearch chatId={chatId} onClose={onClose} />
                     </View>
                 </SafeAreaView>
@@ -54,34 +54,3 @@ export const SearchModal = ({ visible, onClose, chatId }: SearchModalProps) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    safeArea: {
-        flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 8,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
-    backButton: {
-        padding: 8,
-        marginRight: 8,
-    },
-    title: {
-        fontSize: 17,
-        fontWeight: '600',
-        flex: 1,
-        textAlign: 'center',
-    },
-    placeholder: {
-        width: 40,
-    },
-    content: {
-        flex: 1,
-    },
-}); 
