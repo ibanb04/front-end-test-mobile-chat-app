@@ -118,11 +118,12 @@ export function useChatsDb(currentUserId: string | null) {
             status: c.userStatus,
           }));
 
+        const lastMessage = chatMessages.sort((a, b) => b.timestamp - a.timestamp)[0];
         return {
           id: chatId,
           participants,
           messages: chatMessages.reverse(),
-          lastMessage: chatMessages[0],
+          lastMessage,
         };
       });
 

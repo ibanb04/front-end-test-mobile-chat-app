@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useUser } from './useUser';
-import { useChats, type Chat, type Message } from './useChats';
+import { useChats, type Chat } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
 import { useDatabase } from './useDatabase';
 import { Colors } from '@/constants/Colors';
@@ -10,32 +10,26 @@ type Theme = {
   colors: typeof Colors.light;
 };
 
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  status: 'online' | 'offline' | 'away';
+}
+
+interface Media {
+  type: 'image' | 'video' | 'audio' | 'file';
+  uri: string;
+  name?: string;
+  size?: number;
+}
+
 interface AppContextType {
-  currentUser: {
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'online' | 'offline' | 'away';
-  } | null;
-  users: Array<{
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'online' | 'offline' | 'away';
-  }>;
+  currentUser: User | null;
+  users: User[];
   chats: Chat[];
   createChat: (participants: string[]) => Promise<Chat | null>;
-  sendMessage: (
-    chatId: string,
-    text: string,
-    senderId: string,
-    media?: {
-      type: 'image' | 'video' | 'audio' | 'file';
-      uri: string;
-      name?: string;
-      size?: number;
-    } | null
-  ) => Promise<boolean>;
+  sendMessage: (chatId: string, text: string, senderId: string, media?: Media | null) => Promise<boolean>;
   markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
   deleteMessage: (messageId: string, chatId: string) => Promise<boolean>;
   login: (userId: string) => Promise<boolean>;
@@ -52,29 +46,29 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const { currentUser, users, login, isLoggedIn, loading: userLoading, logout } = useUser();
   const { chats, createChat, sendMessage, markMessageAsRead, loading: chatsLoading, deleteMessage } = useChats(currentUser?.id || null);
   const colorScheme = useColorScheme();
-  const loading = !isInitialized || userLoading || chatsLoading;
+  const loading = useMemo(() => !isInitialized || userLoading || chatsLoading, [isInitialized, userLoading, chatsLoading]);
 
-  const theme = {
+  const theme = useMemo(() => ({
     colors: Colors[colorScheme ?? 'light']
+  }), [colorScheme]);
+
+  const contextValue = {
+    currentUser,
+    users,
+    chats,
+    createChat,
+    sendMessage,
+    markMessageAsRead,
+    login,
+    isLoggedIn,
+    loading,
+    theme,
+    logout,
+    deleteMessage,
   };
 
   return (
-    <AppContext.Provider
-      value={{
-        currentUser,
-        users,
-        chats,
-        createChat,
-        sendMessage,
-        markMessageAsRead,
-        login,
-        isLoggedIn,
-        loading,
-        theme,
-        logout,
-        deleteMessage,
-      }}
-    >
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );
