@@ -41,7 +41,7 @@ interface Media {
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { currentUser, users, chats, sendMessage, markMessageAsRead, theme, deleteMessage } = useAppContext();
+  const { currentUser, chats, sendMessage, markMessageAsRead, theme, deleteMessage } = useAppContext();
   const [messageText, setMessageText] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<{
     type: 'image' | 'video' | 'audio' | 'file';
@@ -64,14 +64,9 @@ export default function ChatRoomScreen() {
 
   const chat = chats.find(c => c.id === chatId);
 
-  const chatParticipants = chat?.participants
-    .filter((id: string) => id !== currentUser?.id)
-    .map((id: string) => users.find(user => user.id === id))
-    .filter(Boolean) || [];
-
-  const chatName = chatParticipants.length === 1
-    ? chatParticipants[0]?.name
-    : `${chatParticipants[0]?.name || 'Unknown'} & ${chatParticipants.length - 1} other${chatParticipants.length > 1 ? 's' : ''}`;
+  const chatName = chat?.participants?.length === 2
+    ? chat?.participants[1]?.name
+    : chat?.participants[0]?.name;
 
   const videoPlayer = useVideoPlayer(selectedMedia?.type === 'video' ? selectedMedia.uri : '', player => {
     player.loop = false;
@@ -229,7 +224,12 @@ export default function ChatRoomScreen() {
         item.senderId !== currentUser.id &&
         item.status !== 'read'
       ))
-      .forEach(({ item }) => markMessageAsRead(item.id, currentUser.id));
+      .forEach(async ({ item }) => {
+        const success = await markMessageAsRead(item.id, currentUser.id);
+        if (!success) {
+          console.error('Error al marcar el mensaje como leído:', item.id);
+        }
+      });
   });
 
   const viewabilityConfig = useRef<ViewabilityConfig>({
@@ -311,8 +311,8 @@ export default function ChatRoomScreen() {
           headerTitle: () => (
             <View style={styles.headerContainer}>
               <Avatar
-                uri={chatParticipants[0]?.avatar}
-                fallback={chatParticipants[0]?.name[0]}
+                uri={chat?.participants[1]?.avatar}
+                fallback={chat?.participants[1]?.name[1]}
                 size={32}
               />
               <ThemedText type="defaultSemiBold" numberOfLines={1}>
