@@ -37,8 +37,6 @@ export default function ChatRoomScreen() {
 
   const {
     flatListRef,
-    handleContentSizeChange,
-    handleScroll,
     scrollToBottom,
   } = useChatScroll();
 
@@ -56,6 +54,14 @@ export default function ChatRoomScreen() {
       scrollToBottom();
     }
   }, [chat?.messages.length, scrollToBottom]);
+
+  // when the user sends a message, scroll to the bottom of the chat
+  const handleSendMessageWrapper = async () => {
+    if (messageText.trim() || selectedMedia) {
+      await handleSendMessage();
+      scrollToBottom();
+    }
+  };
 
   if (!chat || !currentUser) {
     return (
@@ -85,8 +91,6 @@ export default function ChatRoomScreen() {
           onDeleteMessage={handleDeleteMessage}
           onViewableItemsChanged={onViewableItemsChanged}
           flatListRef={flatListRef}
-          onContentSizeChange={handleContentSizeChange}
-          onScroll={handleScroll}
         />
 
         {selectedMedia && (
@@ -102,7 +106,7 @@ export default function ChatRoomScreen() {
           setMessageText={setMessageText}
           selectedMedia={selectedMedia}
           isSending={isSending}
-          onSend={handleSendMessage}
+          onSend={handleSendMessageWrapper}
           onShowMediaOptions={() => setIsMediaPickerVisible(true)}
           onPickImage={pickImage}
         />

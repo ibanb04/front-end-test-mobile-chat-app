@@ -12,8 +12,6 @@ interface ChatMessagesListProps {
   onDeleteMessage: (messageId: string) => void;
   onViewableItemsChanged: (info: { viewableItems: any[] }) => void;
   flatListRef: React.RefObject<FlatList>;
-  onContentSizeChange: () => void;
-  onScroll: (event: any) => void;
 }
 
 export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
@@ -22,8 +20,6 @@ export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
   onDeleteMessage,
   onViewableItemsChanged,
   flatListRef,
-  onContentSizeChange,
-  onScroll,
 }) => {
   const viewabilityConfig = {
     itemVisiblePercentThreshold: 30,
@@ -39,11 +35,7 @@ export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
   );
 
   const keyExtractor = (item: Message) => item.id;
-  const getItemLayout = (data: any, index: number) => ({
-    length: 80,
-    offset: 80 * index,
-    index,
-  });
+
   return (
     <FlatList
       ref={flatListRef}
@@ -56,21 +48,13 @@ export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
           <ThemedText>No messages yet. Say hello!</ThemedText>
         </ThemedView>
       )}
-      onContentSizeChange={onContentSizeChange}
-      onScroll={onScroll}
       scrollEventThrottle={16}
-      inverted={false}
       windowSize={5}
       maxToRenderPerBatch={5}
       updateCellsBatchingPeriod={30}
       initialNumToRender={10}
       removeClippedSubviews={true}
-      getItemLayout={getItemLayout}
       onEndReachedThreshold={0.5}
-      maintainVisibleContentPosition={{
-        minIndexForVisible: 0,
-        autoscrollToTopThreshold: 10,
-      }}
       viewabilityConfig={viewabilityConfig}
       onViewableItemsChanged={onViewableItemsChanged}
     />
