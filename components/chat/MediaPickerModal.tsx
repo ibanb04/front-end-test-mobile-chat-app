@@ -5,6 +5,9 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { mediaPickerModalStyles } from '@/styles/components/mediaPickerModal.styles';
 import { MEDIA_OPTIONS } from '@/constants/mediaOptions';
+import { handleMediaSelection } from '@/helpers/handleMedia';
+import MediaOptionButton from './MediaOptionButton';
+
 interface MediaPickerModalProps {
   visible: boolean;
   onClose: () => void;
@@ -22,7 +25,6 @@ export function MediaPickerModal({
 }: MediaPickerModalProps) {
   const isDark = useColorScheme() === 'dark';
 
-  // Manejo específico para iOS
   React.useEffect(() => {
     if (visible && Platform.OS === 'ios') {
       const options = ['Cancelar', ...MEDIA_OPTIONS.map(opt => opt.label)];
@@ -30,43 +32,14 @@ export function MediaPickerModal({
       ActionSheetIOS.showActionSheetWithOptions(
         { options, cancelButtonIndex: 0 },
         (buttonIndex) => {
-          switch (buttonIndex) {
-            case 1:
-              onSelectImage();
-              break;
-            case 2:
-              onSelectVideo();
-              break;
-            case 3:
-              onSelectFile();
-              break;
-            default:
-              break;
-          }
+          handleMediaSelection(buttonIndex, { onSelectImage, onSelectVideo, onSelectFile });
           onClose();
         }
       );
     }
   }, [visible, onClose, onSelectImage, onSelectVideo, onSelectFile]);
 
-  if (Platform.OS === 'ios' || !visible) {
-    return null;
-  }
-
-  const handleOptionPress = (action: string) => {
-    onClose();
-    switch (action) {
-      case 'onSelectImage':
-        onSelectImage();
-        break;
-      case 'onSelectVideo':
-        onSelectVideo();
-        break;
-      case 'onSelectFile':
-        onSelectFile();
-        break;
-    }
-  };
+  if (Platform.OS === 'ios' || !visible) return null;
 
   return (
     <Modal
@@ -83,24 +56,15 @@ export function MediaPickerModal({
           <ThemedText style={mediaPickerModalStyles.title}>Select media</ThemedText>
           <View style={mediaPickerModalStyles.optionsContainer}>
             {MEDIA_OPTIONS.map((option, index) => (
-              <Pressable
+              <MediaOptionButton
                 key={index}
-                style={({ pressed }) => [
-                  mediaPickerModalStyles.option,
-                  pressed && mediaPickerModalStyles.optionPressed
-                ]}
-                onPress={() => handleOptionPress(option.action)}
-                hitSlop={10}
-              >
-                <IconSymbol
-                  name={option.icon as any}
-                  size={24}
-                  color={isDark ? '#FFFFFF' : '#000000'}
-                />
-                <ThemedText style={mediaPickerModalStyles.optionText}>
-                  {option.label}
-                </ThemedText>
-              </Pressable>
+                option={option}
+                onPress={() => {
+                  onClose();
+                  handleMediaSelection(index + 1, { onSelectImage, onSelectVideo, onSelectFile });
+                }}
+                isDark={isDark}
+              />
             ))}
           </View>
         </View>

@@ -85,7 +85,7 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
         );
       case 'file':
         return (
-          <View style={messageBubbleStyles.fileContainer}>
+          <View style={[messageBubbleStyles.fileContainer, { backgroundColor: theme.colors.backgroundChat }]}>
             <IconSymbol name="document" size={24} color={theme.colors.tint} />
             <ThemedText style={messageBubbleStyles.fileText}>
               {message.mediaName || 'Archivo'}

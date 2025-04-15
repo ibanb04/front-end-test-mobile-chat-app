@@ -93,7 +93,6 @@ export const messageBubbleStyles = StyleSheet.create({
     width: 250,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
