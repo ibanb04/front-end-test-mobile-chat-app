@@ -100,8 +100,8 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
   const bubbleStyle = [
     styles.bubble,
     isCurrentUser
-      ? [styles.selfBubble, { backgroundColor: isDark ? '#235A4A' : '#DCF8C6' }]
-      : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#FFFFFF' }]
+      ? [styles.selfBubble, { backgroundColor: isDark ? '#E2E2B6' : '#E2E2B6' }]
+      : [styles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#ffff' }]
   ];
 
   const handleLongPress = () => {
@@ -141,7 +141,7 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
   return (
     <>
       <Animated.View style={{ opacity: fadeAnim }}>
-        <Pressable 
+        <Pressable
           onLongPress={handleLongPress}
           delayLongPress={500}
           style={[styles.container, isCurrentUser ? styles.selfContainer : styles.otherContainer]}
@@ -149,12 +149,12 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
           <View style={bubbleStyle}>
             {renderMedia()}
             {message.text && (
-              <ThemedText style={[styles.messageText, isCurrentUser && !isDark && styles.selfMessageText]}>
+              <ThemedText style={[styles.messageText, isCurrentUser && { color: '#000000' }]}>
                 {message.text}
               </ThemedText>
             )}
             <View style={styles.footer}>
-              <ThemedText style={styles.timeText}>
+              <ThemedText style={[styles.timeText, isCurrentUser && { color: '#000000' }]}>
                 {formatTime(message.timestamp)}
               </ThemedText>
               {isCurrentUser && (

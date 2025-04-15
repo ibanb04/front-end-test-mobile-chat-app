@@ -81,8 +81,8 @@ export default function ChatsScreen() {
         }}
       >
         <ThemedView style={styles.modalContainer}>
-          <ThemedView style={styles.modalContent}>
-            <ThemedView style={styles.modalHeader}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: theme.colors.backgroundChat }]}>
+            <ThemedView style={[styles.modalHeader, { backgroundColor: theme.colors.backgroundChat }]}>
               <ThemedText type="subtitle">New Chat</ThemedText>
               <Pressable onPress={() => {
                 setModalVisible(false);
@@ -118,7 +118,7 @@ export default function ChatsScreen() {
               onPress={handleCreateChat}
               disabled={selectedUsers.length === 0}
             >
-              <ThemedText style={styles.createButtonText}>
+              <ThemedText style={[styles.createButtonText, { color: theme.colors.background, }]}>
                 Create Chat
               </ThemedText>
             </Pressable>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#CCCCCC',
   },
   createButtonText: {
-    color: 'white',
+    // color: 'white',
     fontWeight: 'bold',
   },
 });

@@ -323,7 +323,7 @@ export default function ChatRoomScreen() {
       />
 
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.colors.backgroundChat }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -407,7 +407,7 @@ export default function ChatRoomScreen() {
           </ThemedView>
         )}
 
-        <ThemedView style={styles.inputContainer}>
+        <ThemedView style={[styles.inputContainer]}>
           <View style={styles.inputButtonsContainer}>
             <Pressable
               style={styles.mediaButton}
@@ -426,10 +426,15 @@ export default function ChatRoomScreen() {
 
           </View>
           <TextInput
-            style={styles.input}
+            style={[styles.input, {
+              backgroundColor: theme.colors.backgroundChat,
+              borderColor: theme.colors.border,
+              color: theme.colors.text,
+            }]}
             value={messageText}
             onChangeText={setMessageText}
             placeholder="Type a message..."
+            placeholderTextColor={theme.colors.text}
             multiline
             editable={!isSending}
           />
@@ -489,7 +494,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 10,
     alignItems: 'flex-end',
-    borderTopWidth: 1,
+    // borderTopWidth: 0.2,
     borderTopColor: '#E1E1E1',
   },
   inputButtonsContainer: {
@@ -504,12 +509,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E1E1E1',
+    // borderColor: '#E1E1E1',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 8,
     maxHeight: 100,
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: '#FFFFFF',
   },
   sendButton: {
     marginLeft: 8,

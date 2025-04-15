@@ -4,13 +4,15 @@ import { Link } from 'expo-router';
 import { Avatar } from '@/components/Avatar';
 import { ThemedText } from '@/components/common/ThemedText';
 import { MessageStatus } from './MessageStatus';
-import { Chat, User } from '@/interfaces/chatTypes';
+import { Chat } from '@/interfaces/chatTypes';
+import { useAppContext } from '@/hooks/AppContext';
 interface ChatListItemProps {
   chat: Chat;
   currentUserId: string;
 }
 
 export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
+  const { theme } = useAppContext();
   const otherParticipants = chat.participants.filter(user => user.id !== currentUserId);
 
   const firstParticipant = otherParticipants[0];
@@ -54,7 +56,11 @@ export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
 
   return (
     <Link href={`/ChatRoom?chatId=${chat.id}`} asChild>
-      <Pressable style={styles.container}>
+      <Pressable style={{
+        borderBottomWidth: 0.2,
+        borderBottomColor: theme.colors.border,
+        ...styles.container
+      }}>
         <Avatar
           uri={firstParticipant?.avatar}
           fallback={firstParticipant?.name?.[0] || '?'}
@@ -76,7 +82,7 @@ export const ChatListItem = ({ chat, currentUserId }: ChatListItemProps) => {
 
           <View style={styles.messagePreview}>
             <ThemedText
-              style={[styles.preview, isUnread && styles.unreadPreview]}
+              style={[styles.preview, isUnread && { color: theme.colors.primary }]}
               numberOfLines={1}
             >
               {getMessagePreview()}
@@ -97,8 +103,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   content: {
     marginLeft: 12,
@@ -130,8 +134,5 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 4,
   },
-  unreadPreview: {
-    color: '#000000',
-    fontWeight: '500',
-  },
-}); 
+
+});

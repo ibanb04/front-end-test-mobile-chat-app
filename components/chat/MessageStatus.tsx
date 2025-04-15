@@ -10,7 +10,7 @@ interface MessageStatusProps {
 
 export function MessageStatus({ message }: MessageStatusProps) {
   const isDark = useColorScheme() === 'dark';
-  const color = message.status === 'read' ? '#0084FF' : (isDark ? '#8E8E93' : '#8F8F8F');
+  const color = message.status === 'read' ? '#0a7ea4' : (isDark ? '#8E8E93' : '#8F8F8F');
 
   return (
     <View style={styles.container}>
@@ -24,13 +24,13 @@ export function MessageStatus({ message }: MessageStatusProps) {
         <View style={styles.doubleCheckContainer}>
           <IconSymbol
             name="checkmark"
-            size={12}
+            size={14}
             color={color}
             style={styles.firstCheck}
           />
           <IconSymbol
             name="checkmark"
-            size={12}
+            size={14}
             color={color}
             style={styles.secondCheck}
           />
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: 16,
-    height: 12,
+    height: 14,
   },
   firstCheck: {
     position: 'absolute',
