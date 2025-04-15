@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, Pressable, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useAppContext } from '@/hooks/AppContext';
 import { ThemedText } from '@/components/common/ThemedText';
 import { ThemedView } from '@/components/common/ThemedView';
@@ -9,7 +8,6 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function ProfileScreen() {
   const { currentUser, logout } = useAppContext();
-  const router = useRouter();
 
   const handleLogout = () => {
     logout();

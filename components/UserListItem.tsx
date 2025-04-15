@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Avatar } from '@/components/Avatar';
-import { User } from '@/hooks/useUser';
+import { User } from '@/interfaces/chatTypes';
 
 interface UserListItemProps {
   user: User;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { Message } from '@/hooks/useChats';
+import { Message } from '@/interfaces/chatTypes';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface MessageStatusProps {

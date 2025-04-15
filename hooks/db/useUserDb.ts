@@ -3,13 +3,8 @@ import { db } from '../../database/db';
 import { users } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import { useDatabaseStatus } from '../../database/DatabaseProvider';
+import { User } from '@/interfaces/chatTypes';
 
-export interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  status: 'online' | 'offline' | 'away';
-}
 
 export function useUserDb() {
   const [allUsers, setAllUsers] = useState<User[]>([]);

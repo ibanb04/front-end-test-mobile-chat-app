@@ -1,9 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useChatsDb } from './db/useChatsDb';
-import type { Message, Chat } from './db/useChatsDb';
-
-export { Chat, Message };
-
+import type { Chat, Media } from '@/interfaces/chatTypes';
 export function useChats(currentUserId: string | null) {
   const { chats, createChat, sendMessage, markMessageAsRead, loading } = useChatsDb(currentUserId);
 
@@ -22,12 +18,7 @@ export function useChats(currentUserId: string | null) {
       chatId: string,
       text: string,
       senderId: string,
-      media?: {
-        type: 'image' | 'video' | 'audio' | 'file';
-        uri: string;
-        name?: string;
-        size?: number;
-      } | null
+      media?: Media | null
     ) => sendMessage(chatId, text, senderId, media),
     markMessageAsRead,
     loading,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, Pressable, Modal } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
-import { Message } from '@/hooks/useChats';
+import { Message } from '@/interfaces/chatTypes';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { MessageStatus } from './MessageStatus';
 import { IconSymbol } from '@/components/ui/IconSymbol';

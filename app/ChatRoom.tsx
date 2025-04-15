@@ -26,18 +26,12 @@ import { ThemedText } from '@/components/common/ThemedText';
 import { ThemedView } from '@/components/common/ThemedView';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import type { Message } from '@/hooks/useChats';
 import { MediaPickerModal } from '@/components/chat/MediaPickerModal';
 import { Avatar } from '@/components/Avatar';
 import * as FileSystem from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { Media, Message } from '@/interfaces/chatTypes';
 
-interface Media {
-  type: 'image' | 'video' | 'audio' | 'file';
-  uri: string;
-  name?: string;
-  size?: number;
-}
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();

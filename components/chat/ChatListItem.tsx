@@ -1,12 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Link } from 'expo-router';
-import { Chat } from '@/hooks/useChats';
 import { Avatar } from '@/components/Avatar';
 import { ThemedText } from '@/components/common/ThemedText';
-import { User } from '@/hooks/useUser';
 import { MessageStatus } from './MessageStatus';
-
+import { Chat, User } from '@/interfaces/chatTypes';
 interface ChatListItemProps {
   chat: Chat;
   currentUserId: string;

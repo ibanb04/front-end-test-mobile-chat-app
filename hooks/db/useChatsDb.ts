@@ -1,34 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../database/db';
 import { chats, chatParticipants, messages, messageReads } from '../../database/schema';
-import { eq, and, desc, sql, inArray } from 'drizzle-orm';
+import { eq,  desc,inArray } from 'drizzle-orm';
 import { useDatabaseStatus } from '../../database/DatabaseProvider';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-
-export interface Message {
-  id: string;
-  chatId: string;
-  senderId: string;
-  text: string;
-  timestamp: number;
-  status: 'sent' | 'delivered' | 'read';
-  mediaType?: 'image' | 'video' | 'audio' | 'file' | null;
-  mediaUrl?: string | null;
-  mediaSize?: number | null;
-  mediaName?: string | null;
-  reads?: Array<{
-    userId: string;
-    timestamp: number;
-  }>;
-}
-
-export interface Chat {
-  id: string;
-  participants: string[];
-  messages: Message[];
-  lastMessage?: Message;
-}
+import { Chat, Media, Message } from '@/interfaces/chatTypes';
 
 export function useChatsDb(currentUserId: string | null) {
   const [userChats, setUserChats] = useState<Chat[]>([]);
@@ -36,7 +13,6 @@ export function useChatsDb(currentUserId: string | null) {
   const { isInitialized } = useDatabaseStatus();
 
   useEffect(() => {
-    console.log('useChatsDb effect triggered, isInitialized:', isInitialized, 'currentUserId:', currentUserId);
     
     if (!isInitialized) {
       console.log('Database not initialized yet, waiting...');
@@ -54,13 +30,11 @@ export function useChatsDb(currentUserId: string | null) {
       setLoading(true);
       try {
         // Get all chats where the current user is a participant
-        console.log('Fetching participant chats...');
         const participantChats = await db
           .select()
           .from(chatParticipants)
           .where(eq(chatParticipants.userId, currentUserId));
         
-        console.log('Found participant chats:', participantChats.length);
         const chatIds = participantChats.map(pc => pc.chatId);
         
         if (chatIds.length === 0) {
@@ -70,13 +44,11 @@ export function useChatsDb(currentUserId: string | null) {
         }
         
         // Get all participants for these chats
-        console.log('Fetching all participants for chats:', chatIds);
         const allParticipants = await db
           .select()
           .from(chatParticipants)
           .where(inArray(chatParticipants.chatId, chatIds));
         
-        console.log('Found participants:', allParticipants.length);
         
         // Group participants by chat
         const participantsByChat = allParticipants.reduce((acc, p) => {
@@ -88,14 +60,12 @@ export function useChatsDb(currentUserId: string | null) {
         }, {} as Record<string, string[]>);
         
         // Get all messages for these chats
-        console.log('Fetching messages for chats');
         const messagesData = await db
           .select()
           .from(messages)
           .where(inArray(messages.chatId, chatIds))
           .orderBy(desc(messages.timestamp));
         
-        console.log('Found messages:', messagesData.length);
         
         // Group messages by chat
         const messagesByChat = messagesData.reduce((acc, m) => {
@@ -107,7 +77,6 @@ export function useChatsDb(currentUserId: string | null) {
         }, {} as Record<string, typeof messagesData>);
         
         // Build the chat objects
-        console.log('Building chat objects...');
         const loadedChats: Chat[] = [];
         
         for (const chatId of chatIds) {
@@ -202,12 +171,7 @@ export function useChatsDb(currentUserId: string | null) {
     chatId: string,
     text: string,
     senderId: string,
-    media?: {
-      type: 'image' | 'video' | 'audio' | 'file';
-      uri: string;
-      name?: string;
-      size?: number;
-    } | null
+    media?: Media | null
   ) => {
     if (!text.trim() && !media) return false;
     
@@ -228,7 +192,7 @@ export function useChatsDb(currentUserId: string | null) {
       }
       
       // Insert new message
-      const result = await db.insert(messages).values({
+      await db.insert(messages).values({
         id: messageId,
         chatId: chatId,
         senderId: senderId,

@@ -1,8 +1,9 @@
 import { db } from './db';
 import { users, chats, chatParticipants, messages } from './schema';
+import { Chat, User } from '@/interfaces/chatTypes';
 
 // Mock user data from the original useUser hook
-const mockUsers = [
+const mockUsers: User[] = [
   {
     id: '1',
     name: 'John Doe',
@@ -30,13 +31,14 @@ const mockUsers = [
 ];
 
 // Initial chat data (similar to useChats)
-const initialChats = [
+const initialChats: Chat  [] = [
   {
     id: 'chat1',
     participants: ['1', '2'],
     messages: [
       {
-        id: 'msg1',
+        id: 'msg1', 
+        chatId: 'chat1',
         senderId: '2',
         text: 'Hey, how are you?',
         timestamp: Date.now() - 3600000,

@@ -28,14 +28,14 @@ export type DBMessage = typeof messages.$inferSelect;
 // Initialize function to create tables if they don't exist
 export async function initializeDatabase() {
   try {
-    console.log('Dropping existing tables...');
-    await sqlite.execAsync(`
-      DROP TABLE IF EXISTS message_reads;
-      DROP TABLE IF EXISTS messages;
-      DROP TABLE IF EXISTS chat_participants;
-      DROP TABLE IF EXISTS chats;
-      DROP TABLE IF EXISTS users;
-    `);
+    // console.log('Dropping existing tables...');
+    // await sqlite.execAsync(`
+    //   DROP TABLE IF EXISTS message_reads;
+    //   DROP TABLE IF EXISTS messages;
+    //   DROP TABLE IF EXISTS chat_participants;
+    //   DROP TABLE IF EXISTS chats;
+    //   DROP TABLE IF EXISTS users;
+    // `);
     
     console.log('Creating users table...');
     await sqlite.execAsync(`

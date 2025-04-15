@@ -1,40 +1,25 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, } from 'react';
 import { useUser } from './useUser';
-import { useChats, type Chat, type Message } from './useChats';
+import { useChats } from './useChats';
 import { DatabaseProvider } from '../database/DatabaseProvider';
 import { useDatabase } from './useDatabase';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
-
+import { Chat, Media, User, } from '@/interfaces/chatTypes';
 type Theme = {
   colors: typeof Colors.light;
 };
 
 interface AppContextType {
-  currentUser: {
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'online' | 'offline' | 'away';
-  } | null;
-  users: Array<{
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'online' | 'offline' | 'away';
-  }>;
+  currentUser: User | null;
+  users: User[];
   chats: Chat[];
   createChat: (participants: string[]) => Promise<Chat | null>;
   sendMessage: (
     chatId: string,
     text: string,
     senderId: string,
-    media?: {
-      type: 'image' | 'video' | 'audio' | 'file';
-      uri: string;
-      name?: string;
-      size?: number;
-    } | null
+    media?: Media | null
   ) => Promise<boolean>;
   markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
   login: (userId: string) => Promise<boolean>;
