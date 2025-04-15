@@ -12,7 +12,7 @@ export const formatTimeOnly = (date: Date): string => {
   return date.toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit'
-  });
+  }); 
 };
 
 export const formatDateOnly = (date: Date, today: Date): string => {

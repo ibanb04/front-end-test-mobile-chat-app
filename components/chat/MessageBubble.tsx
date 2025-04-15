@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Pressable, Modal, Alert, Animated } from 'react-native';
 import { ThemedText } from '@/components/common/ThemedText';
 import { Message } from '@/interfaces/chatTypes';
@@ -10,6 +10,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { messageBubbleStyles } from '@/styles/components/messageBubble.styles';
 import { useFadeAnimation } from '@/hooks/useFadeAnimation';
 import { MessageMedia } from './MessageMedia';
+import { formatTimeOnly } from '@/utils/dateUtils';
 
 interface MessageBubbleProps {
   message: Message;
@@ -25,14 +26,8 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
 
   const videoPlayer = useVideoPlayer(
     message.mediaType === 'video' && message.mediaUrl ? message.mediaUrl : 'https://example.com/placeholder.mp4',
-    player => {
-      player.loop = false;
-    }
+    player => { player.loop = false; }
   );
-
-  const formatTime = useCallback((timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }, []);
 
   const handleLongPress = useCallback(() => {
     if (isCurrentUser) {
@@ -41,28 +36,22 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
         '¿Estás seguro de que quieres eliminar este mensaje?',
         [
           { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Eliminar',
-            style: 'destructive',
-            onPress: () => fadeOut(() => onDelete?.(message.id)),
-          },
+          { text: 'Eliminar', style: 'destructive', onPress: () => fadeOut(() => onDelete?.(message.id)) }
         ]
       );
     }
   }, [isCurrentUser, fadeOut, onDelete, message.id]);
 
   useEffect(() => {
-    if (!isVideoViewerVisible) {
-      videoPlayer.pause();
-    }
+    if (!isVideoViewerVisible) videoPlayer.pause();
   }, [isVideoViewerVisible, videoPlayer]);
 
-  const bubbleStyle = useMemo(() => [
+  const bubbleStyle = [
     messageBubbleStyles.bubble,
     isCurrentUser
-      ? [messageBubbleStyles.selfBubble, { backgroundColor: isDark ? '#E2E2B6' : '#E2E2B6' }]
+      ? [messageBubbleStyles.selfBubble, { backgroundColor: '#E2E2B6' }]
       : [messageBubbleStyles.otherBubble, { backgroundColor: isDark ? '#2A2C33' : '#ffff' }]
-  ], [isCurrentUser, isDark]);
+  ];
 
   return (
     <>
@@ -85,7 +74,7 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
             )}
             <View style={messageBubbleStyles.footer}>
               <ThemedText style={[messageBubbleStyles.timeText, isCurrentUser && { color: '#000000' }]}>
-                {formatTime(message.timestamp)}
+                {formatTimeOnly(new Date(message.timestamp))}
               </ThemedText>
               {isCurrentUser && (
                 <View style={messageBubbleStyles.footerActions}>
@@ -103,7 +92,7 @@ export function MessageBubble({ message, isCurrentUser, onDelete }: MessageBubbl
       />
       <Modal
         visible={isVideoViewerVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setIsVideoViewerVisible(false)}
       >
