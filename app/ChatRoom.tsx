@@ -1,287 +1,61 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ViewToken,
-  ViewabilityConfig,
-  Alert,
-  Image,
-  ActivityIndicator,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from 'react-native';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { useVideoPlayer } from 'expo-video';
 import { useAppContext } from '@/hooks/AppContext';
-import { ThemedText } from '@/components/common/ThemedText';
 import { ThemedView } from '@/components/common/ThemedView';
-import { MessageBubble } from '@/components/chat/MessageBubble';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ThemedText } from '@/components/common/ThemedText';
 import { MediaPickerModal } from '@/components/chat/MediaPickerModal';
-import { Avatar } from '@/components/Avatar';
-import * as FileSystem from 'expo-file-system';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { Media, Message } from '@/interfaces/chatTypes';
 import { chatRoomScreenStyles } from '@/styles/screens/chatRoomScreenStyles.styles';
-
+import { useChatRoom } from '@/hooks/useChatRoom';
+import { useChatScroll } from '@/hooks/useChatScroll';
+import { ChatHeader } from '@/components/chat/ChatHeader';
+import { MediaPreview } from '@/components/chat/MediaPreview';
+import { ChatInput } from '@/components/chat/ChatInput';
+import { ChatMessagesList } from '@/components/chat/ChatMessagesList';
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { currentUser, chats, sendMessage, markMessageAsRead, theme, deleteMessage } = useAppContext();
-  const [messageText, setMessageText] = useState('');
-  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
-  const [isSending, setIsSending] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
-  const router = useRouter();
-  const [isMediaPickerVisible, setIsMediaPickerVisible] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
+  const { theme } = useAppContext();
+  const {
+    chat,
+    currentUser,
+    messageText,
+    setMessageText,
+    selectedMedia,
+    setSelectedMedia,
+    isSending,
+    isMediaPickerVisible,
+    setIsMediaPickerVisible,
+    handleSendMessage,
+    pickImage,
+    pickVideo,
+    pickFile,
+    handleDeleteMessage,
+    onViewableItemsChanged,
+  } = useChatRoom(chatId);
 
-  const formatFileSize = (bytes?: number | null) => {
-    if (!bytes) return '';
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
-  };
-
-  const chat = chats.find(c => c.id === chatId);
-
-  const chatName = chat?.participants?.length === 2
-    ? chat?.participants[1]?.name
-    : chat?.participants[0]?.name;
+  const {
+    flatListRef,
+    handleContentSizeChange,
+    handleScroll,
+    scrollToBottom,
+  } = useChatScroll();
 
   const videoPlayer = useVideoPlayer(selectedMedia?.type === 'video' ? selectedMedia.uri : '', player => {
     player.loop = false;
     player.play();
   });
 
-  const handleSendMessage = async () => {
-    if (!currentUser || !chat || (!messageText.trim() && !selectedMedia)) return;
-
-    setIsSending(true);
-
-    try {
-      const mediaToSend = selectedMedia ? prepareMedia(selectedMedia) : null;
-
-      if (mediaToSend && Platform.OS === 'ios') {
-        await verifyVideoAccessibility(mediaToSend.uri);
-      }
-
-      const success = await sendMessage(chat.id, messageText.trim(), currentUser.id, mediaToSend);
-
-      if (!success) {
-        throw new Error('Error al enviar el mensaje');
-      }
-
-      resetMessageInput();
-    } catch (error) {
-      console.error('Error al enviar el mensaje:', error);
-      Alert.alert('Error', 'No se pudo enviar el mensaje. Por favor, inténtalo de nuevo.');
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const prepareMedia = (media: Media) => ({
-    ...media,
-    name: media.name || `media_${Date.now()}.${media.type}`,
-  });
-
-  const verifyVideoAccessibility = async (uri: string) => {
-    try {
-      const videoInfo = await FileSystem.getInfoAsync(uri);
-      if (!videoInfo.exists) {
-        throw new Error('El archivo de video no existe o no es accesible');
-      }
-    } catch (error) {
-      console.error('Error al verificar el video en iOS:', error);
-      throw new Error('No se pudo verificar el archivo de video');
-    }
-  };
-
-  const resetMessageInput = () => {
-    setMessageText('');
-    setSelectedMedia(null);
-  };
-
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        quality: 0.7,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) return;
-
-      const asset = result.assets[0];
-      const isLargeImage = asset.fileSize && asset.fileSize > 2 * 1024 * 1024;
-
-      const media = isLargeImage
-        ? await compressImage(asset)
-        : { uri: asset.uri, name: asset.fileName || '', size: asset.fileSize };
-
-      setSelectedMedia({ type: 'image', ...media });
-    } catch (error) {
-      console.error('Error al seleccionar la imagen:', error);
-      Alert.alert('Error', 'No se pudo seleccionar la imagen. Por favor, inténtalo de nuevo.');
-    }
-  };
-
-  const compressImage = async (asset: ImagePicker.ImagePickerAsset) => {
-    const context = ImageManipulator.manipulate(asset.uri);
-    const image = await context
-      .resize({ width: 1024 })
-      .renderAsync();
-    const result = await image.saveAsync({
-      compress: 0.6,
-      format: SaveFormat.JPEG
-    });
-    return { uri: result.uri, name: asset.fileName || '', size: asset.fileSize };
-  };
-
-  const pickVideo = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'videos',
-        allowsEditing: true,
-        quality: 1,
-        videoMaxDuration: 60,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const video = result.assets[0];
-
-        // Asegurarse de que el nombre del archivo tenga una extensión
-        const fileName = video.fileName || `video_${Date.now()}.mov`;
-
-        setSelectedMedia({
-          type: 'video',
-          uri: video.uri,
-          name: fileName,
-          size: video.fileSize,
-        });
-
-
-      }
-    } catch (error) {
-      console.error('Error picking video:', error);
-      Alert.alert('Error', 'No se pudo seleccionar el video. Por favor, inténtalo de nuevo.');
-    }
-  };
-
-  const pickFile = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-      });
-
-      if (result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        setSelectedMedia({
-          type: 'file',
-          uri: asset.uri,
-          name: asset.name || 'Archivo',
-          size: asset.size,
-        });
-      }
-    } catch (error) {
-      console.error('Error picking file:', error);
-    }
-  };
-
-  const showMediaOptions = () => {
-    setIsMediaPickerVisible(true);
-  };
-
-  const removeSelectedMedia = () => {
-    setSelectedMedia(null);
-  };
-
-  const onViewableItemsChangedRef = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (!currentUser || !chat) return;
-    viewableItems
-      .filter(({ item, isViewable }) => (
-        isViewable &&
-        item.senderId !== currentUser.id &&
-        item.status !== 'read'
-      ))
-      .forEach(async ({ item }) => {
-        const success = await markMessageAsRead(item.id, currentUser.id);
-        if (!success) {
-          console.error('Error al marcar el mensaje como leído:', item.id);
-        }
-      });
-  });
-
-  const viewabilityConfig = useRef<ViewabilityConfig>({
-    itemVisiblePercentThreshold: 30,
-    minimumViewTime: 500,
-  }).current;
-
-  const handleContentSizeChange = () => {
-    if (isAtBottom && flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
-    }
-  };
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 20;
-    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-    setIsAtBottom(isCloseToBottom);
-  };
+  const chatName = chat?.participants?.length === 2
+    ? chat?.participants[1]?.name
+    : chat?.participants[0]?.name;
 
   useEffect(() => {
-    if (chat?.messages.length && flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
+    if (chat?.messages.length) {
+      scrollToBottom();
     }
-  }, [chat?.messages.length]);
-
-  useEffect(() => {
-    if (!currentUser || !chat || chat.messages.length === 0) return;
-
-    const lastMessage = chat.messages[chat.messages.length - 1];
-    if (lastMessage.senderId !== currentUser.id && lastMessage.status !== 'read') {
-      markMessageAsRead(lastMessage.id, currentUser.id);
-    }
-  }, [chat?.messages.length, currentUser, chat]);
-
-  const getItemLayout = useCallback((data: any, index: number) => ({
-    length: 80, // altura estimada de cada mensaje
-    offset: 80 * index,
-    index,
-  }), []);
-
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!chat) return;
-
-    try {
-      const success = await deleteMessage(messageId, chat.id);
-      if (!success) {
-        Alert.alert('Error', 'No se pudo eliminar el mensaje');
-      }
-    } catch (error) {
-      console.error('Error deleting message:', error);
-      Alert.alert('Error', 'Ocurrió un error al eliminar el mensaje');
-    }
-  };
-
-  const renderMessage = ({ item }: { item: Message }) => (
-    <MessageBubble
-      message={item}
-      isCurrentUser={item.senderId === currentUser?.id}
-      onDelete={handleDeleteMessage}
-    />
-  );
-
-  const keyExtractor = (item: Message) => item.id;
+  }, [chat?.messages.length, scrollToBottom]);
 
   if (!chat || !currentUser) {
     return (
@@ -294,26 +68,10 @@ export default function ChatRoomScreen() {
   return (
     <SafeAreaView style={chatRoomScreenStyles.container}>
       <StatusBar style="auto" />
-      <Stack.Screen
-        options={{
-          headerTitle: () => (
-            <View style={chatRoomScreenStyles.headerContainer}>
-              <Avatar
-                uri={chat?.participants[1]?.avatar}
-                fallback={chat?.participants[1]?.name[1]}
-                size={32}
-              />
-              <ThemedText type="defaultSemiBold" numberOfLines={1}>
-                {chatName}
-              </ThemedText>
-            </View>
-          ),
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
-              <IconSymbol name="chevron-back" size={24} color={theme.colors.tint} />
-            </Pressable>
-          ),
-        }}
+      <ChatHeader
+        chatName={chatName || ''}
+        avatarUri={chat?.participants[1]?.avatar}
+        avatarFallback={chat?.participants[1]?.name[1]}
       />
 
       <KeyboardAvoidingView
@@ -321,134 +79,35 @@ export default function ChatRoomScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <FlatList
-          ref={flatListRef}
-          data={chat.messages}
-          keyExtractor={keyExtractor}
-          renderItem={renderMessage}
-          contentContainerStyle={chatRoomScreenStyles.messagesContainer}
-          ListEmptyComponent={() => (
-            <ThemedView style={chatRoomScreenStyles.emptyContainer}>
-              <ThemedText>No messages yet. Say hello!</ThemedText>
-            </ThemedView>
-          )}
+        <ChatMessagesList
+          messages={chat.messages}
+          currentUserId={currentUser.id}
+          onDeleteMessage={handleDeleteMessage}
+          onViewableItemsChanged={onViewableItemsChanged}
+          flatListRef={flatListRef}
           onContentSizeChange={handleContentSizeChange}
           onScroll={handleScroll}
-          scrollEventThrottle={16}
-          inverted={false}
-          windowSize={5}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={30}
-          initialNumToRender={10}
-          removeClippedSubviews={true}
-          getItemLayout={getItemLayout}
-          onEndReachedThreshold={0.5}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10,
-          }}
-          viewabilityConfig={viewabilityConfig}
-          onViewableItemsChanged={onViewableItemsChangedRef.current}
         />
 
         {selectedMedia && (
-          <ThemedView style={chatRoomScreenStyles.mediaPreviewContainer}>
-            <Pressable style={chatRoomScreenStyles.removeMediaButton} onPress={removeSelectedMedia}>
-              <IconSymbol name="close" size={24} color={theme.colors.error} />
-            </Pressable>
-            {selectedMedia.type === 'image' && (
-              <Image
-                source={{ uri: selectedMedia.uri }}
-                style={chatRoomScreenStyles.mediaPreview}
-                resizeMode="cover"
-              />
-            )}
-            {selectedMedia.type === 'video' && (
-              <View style={chatRoomScreenStyles.videoPreviewContainer}>
-                <VideoView
-                  player={videoPlayer}
-                  style={chatRoomScreenStyles.videoPreview}
-                  allowsFullscreen
-                  allowsPictureInPicture
-                />
-                <View style={chatRoomScreenStyles.videoInfoContainer}>
-                  <ThemedText style={chatRoomScreenStyles.videoPreviewText}>
-                    {selectedMedia.name || 'Video'}
-                  </ThemedText>
-                  {selectedMedia.size && (
-                    <ThemedText style={chatRoomScreenStyles.videoPreviewSize}>
-                      {formatFileSize(selectedMedia.size)}
-                    </ThemedText>
-                  )}
-                </View>
-              </View>
-            )}
-            {selectedMedia.type === 'file' && (
-              <View style={chatRoomScreenStyles.filePreview}>
-                <IconSymbol name="document" size={32} color={theme.colors.tint} />
-                <View style={chatRoomScreenStyles.fileInfo}>
-                  <ThemedText style={chatRoomScreenStyles.filePreviewText}>
-                    {selectedMedia.name || 'Archivo'}
-                  </ThemedText>
-                  {selectedMedia.size && (
-                    <ThemedText style={chatRoomScreenStyles.filePreviewSize}>
-                      {formatFileSize(selectedMedia.size)}
-                    </ThemedText>
-                  )}
-                </View>
-              </View>
-            )}
-          </ThemedView>
+          <MediaPreview
+            media={selectedMedia}
+            onRemove={() => setSelectedMedia(null)}
+            videoPlayer={videoPlayer}
+          />
         )}
 
-        <ThemedView style={[chatRoomScreenStyles.inputContainer]}>
-          <View style={chatRoomScreenStyles.inputButtonsContainer}>
-            <Pressable
-              style={chatRoomScreenStyles.mediaButton}
-              onPress={showMediaOptions}
-              disabled={isSending}
-            >
-              <IconSymbol name="attach" size={24} color={theme.colors.tint} />
-            </Pressable>
-            <Pressable
-              style={chatRoomScreenStyles.mediaButton}
-              onPress={pickImage}
-              disabled={isSending}
-            >
-              <IconSymbol name="image" size={24} color={theme.colors.tint} />
-            </Pressable>
-
-          </View>
-          <TextInput
-            style={[chatRoomScreenStyles.input, {
-              backgroundColor: theme.colors.backgroundChat,
-              borderColor: theme.colors.border,
-              color: theme.colors.text,
-            }]}
-            value={messageText}
-            onChangeText={setMessageText}
-            placeholder="Type a message..."
-            placeholderTextColor={theme.colors.text}
-            multiline
-            editable={!isSending}
-          />
-          <Pressable
-            style={[
-              chatRoomScreenStyles.sendButton,
-              (!messageText.trim() && !selectedMedia) && chatRoomScreenStyles.disabledButton,
-              isSending && chatRoomScreenStyles.sendingButton
-            ]}
-            onPress={handleSendMessage}
-            disabled={(!messageText.trim() && !selectedMedia) || isSending}
-          >
-            {isSending ? (
-              <ActivityIndicator color={theme.colors.tint} />
-            ) : (
-              <IconSymbol name="arrow-up-circle" size={32} color={theme.colors.tint} />
-            )}
-          </Pressable>
-        </ThemedView>
+        <ChatInput
+          messageText={messageText}
+          setMessageText={setMessageText}
+          selectedMedia={selectedMedia}
+          isSending={isSending}
+          onSend={handleSendMessage}
+          onShowMediaOptions={() => setIsMediaPickerVisible(true)}
+          onPickImage={pickImage}
+        />
       </KeyboardAvoidingView>
+
       <MediaPickerModal
         visible={isMediaPickerVisible}
         onClose={() => setIsMediaPickerVisible(false)}
