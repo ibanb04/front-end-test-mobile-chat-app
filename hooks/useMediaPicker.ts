@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 import { Media } from '@/interfaces/chatTypes';
 
 interface UseMediaPickerReturn {
@@ -18,11 +17,13 @@ interface UseMediaPickerReturn {
 
 export const useMediaPicker = (): UseMediaPickerReturn => {
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
-
-  const prepareMedia = useCallback((media: Media) => ({
-    ...media,
-    name: media.name || `media_${Date.now()}.${media.type}`,
-  }), []);
+  // prepare media to be sent to the server
+  const prepareMedia = useCallback((media: Media) => {
+    return {
+      ...media,
+      name: media.name || `media_${Date.now()}.${media.type}`,
+    };
+  }, []);
 
   const verifyVideoAccessibility = useCallback(async (uri: string) => {
     try {
@@ -38,12 +39,10 @@ export const useMediaPicker = (): UseMediaPickerReturn => {
 
   const compressImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
     const context = ImageManipulator.manipulate(asset.uri);
-    const image = await context
-      .resize({ width: 1024 })
-      .renderAsync();
+    const image = await context.resize({ width: 1024 }).renderAsync();
     const result = await image.saveAsync({
       compress: 0.6,
-      format: SaveFormat.JPEG
+      format: SaveFormat.JPEG,
     });
     return { uri: result.uri, name: asset.fileName || '', size: asset.fileSize };
   }, []);
@@ -97,7 +96,7 @@ export const useMediaPicker = (): UseMediaPickerReturn => {
         });
       }
     } catch (error) {
-      console.error('Error picking video:', error);
+      console.error('Error al seleccionar el video:', error);
       Alert.alert('Error', 'No se pudo seleccionar el video. Por favor, inténtalo de nuevo.');
     }
   }, [verifyVideoAccessibility]);
@@ -118,7 +117,7 @@ export const useMediaPicker = (): UseMediaPickerReturn => {
         });
       }
     } catch (error) {
-      console.error('Error picking file:', error);
+      console.error('Error al seleccionar el archivo:', error);
     }
   }, []);
 
@@ -130,4 +129,4 @@ export const useMediaPicker = (): UseMediaPickerReturn => {
     pickFile,
     prepareMedia,
   };
-}; 
+};
