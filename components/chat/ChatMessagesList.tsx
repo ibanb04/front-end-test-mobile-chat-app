@@ -22,8 +22,8 @@ export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
   flatListRef,
 }) => {
   const viewabilityConfig = {
-    itemVisiblePercentThreshold: 30,
-    minimumViewTime: 500,
+    itemVisiblePercentThreshold: 30, // 30% de la vista debe estar visible para considerar que es visible
+    minimumViewTime: 500, // 500ms mínimo tiempo que debe estar visible el item para considerarlo visible
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
