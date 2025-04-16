@@ -1,18 +1,23 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '../../database/db';
-import { chats, chatParticipants, messages, messageReads, users } from '../../database/schema';
-import { eq,  desc,inArray } from 'drizzle-orm';
+import { useState, useEffect, useCallback } from 'react';
 import { useDatabaseStatus } from '../../database/DatabaseProvider';
-import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
-import { Chat, Media, Message } from '@/interfaces/chatTypes';
+import { Chat, Media } from '@/interfaces/chatTypes';
+import { ChatRepository } from '@/database/repositories/ChatRepository';
+import { ChatError } from '@/interfaces/chatRepository';
 
 export function useChatsDb(currentUserId: string | null) {
   const [userChats, setUserChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const { isInitialized } = useDatabaseStatus();
+  const chatRepository = new ChatRepository();
 
-  // Optimized query to fetch all necessary data in a single transaction
+  const handleError = (error: unknown, action: string) => {
+    if (error instanceof ChatError) {
+      console.error(`Error al ${action}: ${error.message}`);
+    } else {
+      console.error(`Error desconocido al ${action}:`, error);
+    }
+  };
+
   const loadChats = useCallback(async () => {
     if (!isInitialized || !currentUserId) {
       setUserChats([]);
@@ -22,77 +27,10 @@ export function useChatsDb(currentUserId: string | null) {
 
     setLoading(true);
     try {
-      // Get all chats for the current user
-      const userChats = await db
-        .select({ chatId: chatParticipants.chatId })
-        .from(chatParticipants)
-        .where(eq(chatParticipants.userId, currentUserId));
-
-      if (userChats?.length === 0) {
-        setUserChats([]);
-        return;
-      }
-      // Get all chat IDs for the current user
-      const chatIds = userChats.map(c => c.chatId);
-
-      // Fetch all necessary data in a single transaction 
-      const [chatData, messagesWithReads] = await Promise.all([
-        // Fetch all chat participants and their info
-        db
-          .select({
-            chatId: chatParticipants.chatId,
-            participantId: chatParticipants.userId,
-            name: users.name,
-            avatar: users.avatar,
-            status: users.status,
-          })
-          .from(chatParticipants)
-          .innerJoin(users, eq(chatParticipants.userId, users.id))
-          .where(inArray(chatParticipants.chatId, chatIds)),
-
-        // Fetch all messages with their reads
-        db
-          .select({
-            message: messages,
-            reads: messageReads,
-          })
-          .from(messages)
-          .leftJoin(messageReads, eq(messages.id, messageReads.messageId))
-          .where(inArray(messages.chatId, chatIds))
-          .orderBy(desc(messages.timestamp))
-      ]);
-
-      // Process the chats and messages in a single transaction
-      const processedChats: Chat[] = chatIds.map(chatId => {    
-        const chatMessages = messagesWithReads
-          .filter(m => m.message.chatId === chatId)
-          .map(({ message, reads }) => ({
-            ...message,
-            status: message.status as 'sent' | 'delivered' | 'read',
-            reads: reads ? [{ userId: reads.userId, timestamp: reads.timestamp }] : [],
-          }));
-
-        const participants = chatData
-          .filter(c => c.chatId === chatId)
-          .map(c => ({
-            id: c.participantId,
-            name: c.name,
-            avatar: c.avatar,
-            status: c.status,
-          }));
-
-        const lastMessage = chatMessages.sort((a, b) => b.timestamp - a.timestamp)[0];
-        return {
-          id: chatId,
-          participants,
-          messages: chatMessages.reverse(),
-          lastMessage,
-        };
-      });
-
-      setUserChats(processedChats);
+      const chats = await chatRepository.loadChats(currentUserId);
+      setUserChats(chats);
     } catch (error) {
-      console.error('Error loading chats:', error);
+      handleError(error, 'cargar chats');
     } finally {
       setLoading(false);
     }
@@ -106,223 +44,64 @@ export function useChatsDb(currentUserId: string | null) {
     if (!currentUserId || !participantIds.includes(currentUserId)) return null;
 
     try {
-      const chatId = `chat${Date.now()}`;
-
-      // Insert new chat and participants in a single transaction
-      await db.transaction(async (tx) => {
-        await tx.insert(chats).values({ id: chatId });
-
-        const participantValues = participantIds.map(userId => ({
-          id: `cp-${chatId}-${userId}`,
-          chatId,
-          userId,
-        }));
-        await tx.insert(chatParticipants).values(participantValues);
-      });
-
-      // Get user info for participants
-      const participantUsers = await db
-        .select()
-        .from(users)
-        .where(inArray(users.id, participantIds));
-
-      const newChat: Chat = {
-        id: chatId,
-        participants: participantUsers.map(({ id, name, avatar, status }) => ({
-          id, name, avatar, status
-        })),
-        messages: []  ,
-      };
-
-      setUserChats(prevChats => [...prevChats, newChat]);
+      const newChat = await chatRepository.createChat(participantIds);
+      if (newChat) setUserChats(prevChats => [...prevChats, newChat]);
       return newChat;
     } catch (error) {
-      console.error('Error creating chat:', error);
+      handleError(error, 'crear chat');
       return null;
     }
-  }, [currentUserId, isInitialized]);
+  }, [currentUserId]);
 
-  // Optimized message sending with batch updates
-  const sendMessage = useCallback(async (
-    chatId: string,
-    text: string,
-    senderId: string,
-    media?: Media | null
-  ) => {
-    if (!text.trim() && !media) return false;
-
-    const messageId = `msg${Date.now()}`;
-    const timestamp = Date.now();
-
-    const validateMedia = async (media: Media | null | undefined) => {
-      if (media && Platform.OS === 'ios') {
-        const mediaInfo = await FileSystem.getInfoAsync(media.uri);
-        if (!mediaInfo.exists) {
-          throw new Error('El archivo multimedia no existe o no es accesible');
-        }
-      }
-    };
-
+  const sendMessage = useCallback(async (chatId: string, text: string, senderId: string, media?: Media | null) => {
     try {
-      await validateMedia(media);
-      // Batch insert message and update state
-      await db.transaction(async (tx) => {
-        await tx.insert(messages).values({
-          id: messageId,
-          chatId,
-          senderId,
-          text,
-          timestamp,
-          status: 'sent',
-          mediaType: media?.type,
-          mediaUrl: media?.uri,
-          mediaSize: media?.size,
-          mediaName: media?.name,
-        });
-
-        // Update state with optimistic update
-        setUserChats(prevChats => {
-          return prevChats.map(chat => {
-            if (chat.id === chatId) {
-              const newMessage = {
-                id: messageId,
-                chatId,
-                senderId,
-                text,
-                timestamp,
-                status: 'sent' as const,
-                mediaType: media?.type,
-                mediaUrl: media?.uri,
-                mediaSize: media?.size,
-                mediaName: media?.name,
-                reads: [],
-              };
-
-              return {
-                ...chat,
-                messages: [...chat.messages, newMessage],
-                lastMessage: newMessage,
-              };
-            }
-            return chat;
-          });
-        });
-      });
-
-      // Simulate message delivery after 1 second
-      setTimeout(async () => {
-        await db.transaction(async (tx) => {
-          await tx.update(messages)
-            .set({ status: 'delivered' })
-            .where(eq(messages.id, messageId));
-
-          setUserChats(prevChats => {
-            return prevChats.map(chat => {
-              if (chat.id === chatId) {
-                return {
-                  ...chat,
-                  messages: chat.messages.map(msg => 
-                    msg.id === messageId 
-                      ? { ...msg, status: 'delivered' as const }
-                      : msg
-                  ),
-                  lastMessage: chat.lastMessage?.id === messageId
-                    ? { ...chat.lastMessage, status: 'delivered' as const }
-                    : chat.lastMessage,
-                };
-              }
-              return chat;
-            });
-          });
-        });
-      }, 1000);
-
+      const newMessage = await chatRepository.sendMessage(chatId, text, senderId, media);
+      setUserChats(prevChats => prevChats.map(chat => 
+        // Update the chat with the new message
+        chat.id === chatId ? 
+        { ...chat, messages: [...chat.messages, newMessage], lastMessage: newMessage } 
+        : chat
+      ));
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      handleError(error, 'enviar mensaje');
       return false;
     }
   }, []);
 
+  // Todo: fix this
   const markMessageAsRead = useCallback(async (messageId: string, userId: string) => {
-    if (!isInitialized) {
-      console.error('Database not initialized');
-      return false;
-    }
-
     try {
-      const timestamp = Date.now();
-      const readEntry = {
-        id: `read${timestamp}`, // Cambiar a un id único
-        messageId,
-        userId,
-        timestamp,
-      };
-
-      // Insertar lectura de mensaje y actualizar estado del mensaje
-      await Promise.all([
-        db.insert(messageReads).values(readEntry),
-        db.update(messages).set({ status: 'read' }).where(eq(messages.id, messageId))
-      ]);
-
-      // Actualizar estado local
-      setUserChats(prevChats => prevChats.map(chat => {
-        const updatedMessages = chat.messages.map(msg => 
-          msg.id === messageId 
-            ? { 
-                ...msg, 
-                status: 'read' as const, 
-                reads: [...(msg.reads || []), { userId, timestamp }] 
-              }
-            : msg
-        );
-
-        return {
-          ...chat,
-          messages: updatedMessages,
-          lastMessage: chat.lastMessage?.id === messageId
-            ? { ...chat.lastMessage, status: 'read' }
-            : chat.lastMessage,
-        };
-      }));
-
-      return true;
+      const success = await chatRepository.markMessageAsRead(messageId, userId);
+      if (success) {
+        setUserChats(prevChats => prevChats.map(chat => {
+          const updatedMessages = chat.messages.map(msg => 
+            msg.id === messageId ? { ...msg, status: 'read' as const, reads: [...(msg.reads || []), { userId, timestamp: Date.now() }] } : msg
+          );
+          return { ...chat, messages: updatedMessages, lastMessage: chat.lastMessage?.id === messageId ? { ...chat.lastMessage, status: 'read' } : chat.lastMessage };
+        }));
+      }
+      return success;
     } catch (error) {
-      console.error('Error marking message as read:', error);
+      handleError(error, 'marcar mensaje como leído');
       return false;
     }
-  }, [isInitialized]);
+  }, []);
 
   const deleteMessage = useCallback(async (messageId: string, chatId: string) => {
-    if (!isInitialized) {
-      console.error('Database not initialized');
-      return false;
-    }
-
     try {
-      // Eliminar el mensaje de la base de datos
-      await db.delete(messages)
-        .where(eq(messages.id, messageId));
-
-      // Actualizar el estado local
-      setUserChats(prevChats => prevChats.map(chat => 
-        chat.id === chatId 
-          ? {
-              ...chat,
-              messages: chat.messages.filter(msg => msg.id !== messageId),
-              lastMessage: chat.messages.length > 1 
-                ? chat.messages[chat.messages.length - 2]  // TODO: change to the last message
-                : undefined
-            }
-          : chat
-      ));
-
-      return true;
+      const success = await chatRepository.deleteMessage(messageId, chatId);
+      if (success) {
+        setUserChats(prevChats => prevChats.map(chat => 
+          chat.id === chatId ? { ...chat, messages: chat.messages.filter(msg => msg.id !== messageId), lastMessage: chat.messages.length > 1 ? chat.messages[chat.messages.length - 2] : undefined } : chat
+        ));
+      }
+      return success;
     } catch (error) {
-      console.error('Error deleting message:', error);
+      handleError(error, 'eliminar mensaje');
       return false;
     }
-  }, [isInitialized]);
+  }, []);
 
   return {
     chats: userChats,
@@ -332,4 +111,4 @@ export function useChatsDb(currentUserId: string | null) {
     deleteMessage,
     loading: loading || !isInitialized,
   };
-} 
+}
