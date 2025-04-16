@@ -8,32 +8,45 @@ import { ThemedView } from '@/components/common/ThemedView';
 import { ThemedText } from '@/components/common/ThemedText';
 import { MediaPickerModal } from '@/components/chat/MediaPickerModal';
 import { chatRoomScreenStyles } from '@/styles/screens/chatRoomScreenStyles.styles';
-import { useChatRoom } from '@/hooks/useChatRoom';
+import { useChatMessages } from '@/hooks/useChatMessages';
 import { useChatScroll } from '@/hooks/useChatScroll';
+import { useMessageInput } from '@/hooks/useMessageInput';
+import { useMediaPicker } from '@/hooks/useMediaPicker';
+// import { useMessageStatus } from '@/hooks/useMessageStatus';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MediaPreview } from '@/components/chat/MediaPreview';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { ChatMessagesList } from '@/components/chat/ChatMessagesList';
+
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const { theme } = useAppContext();
+  const [isMediaPickerVisible, setIsMediaPickerVisible] = React.useState(false);
+
   const {
     chat,
     currentUser,
+    isSending,
+    handleSendMessage,
+    handleDeleteMessage,
+  } = useChatMessages(chatId);
+
+  const {
     messageText,
     setMessageText,
-    selectedMedia,
-    setSelectedMedia,
-    isSending,
-    isMediaPickerVisible,
-    setIsMediaPickerVisible,
-    handleSendMessage,
+    resetMessageInput,
+  } = useMessageInput();
+
+  const {
     pickImage,
     pickVideo,
     pickFile,
-    handleDeleteMessage,
-    onViewableItemsChanged,
-  } = useChatRoom(chatId);
+    selectedMedia,
+    setSelectedMedia,
+    prepareMedia,
+  } = useMediaPicker();
+
+  // const { onViewableItemsChanged } = useMessageStatus();
 
   const {
     flatListRef,
@@ -55,10 +68,12 @@ export default function ChatRoomScreen() {
     }
   }, [chat?.messages.length, scrollToBottom]);
 
-  // when the user sends a message, scroll to the bottom of the chat
   const handleSendMessageWrapper = async () => {
     if (messageText.trim() || selectedMedia) {
-      await handleSendMessage();
+      const mediaToSend = selectedMedia ? prepareMedia(selectedMedia) : null;
+      await handleSendMessage(messageText, mediaToSend);
+      resetMessageInput();
+      setSelectedMedia(null);
       scrollToBottom();
     }
   };
@@ -89,7 +104,6 @@ export default function ChatRoomScreen() {
           messages={chat.messages}
           currentUserId={currentUser.id}
           onDeleteMessage={handleDeleteMessage}
-          onViewableItemsChanged={onViewableItemsChanged}
           flatListRef={flatListRef}
         />
 

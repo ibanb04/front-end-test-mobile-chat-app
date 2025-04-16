@@ -34,7 +34,7 @@ const mockUsers: User[] = [
 const initialChats: Chat  [] = [
   {
     id: 'chat1',
-    participants: ['1', '2'],
+    participants: [mockUsers[0], mockUsers[1]],
     messages: [
       {
         id: 'msg1', 
@@ -46,6 +46,7 @@ const initialChats: Chat  [] = [
       },
       {
         id: 'msg2',
+        chatId: 'chat1',
         senderId: '1',
         text: 'I\'m good, thanks for asking!',
         timestamp: Date.now() - 1800000,
@@ -55,10 +56,11 @@ const initialChats: Chat  [] = [
   },
   {
     id: 'chat2',
-    participants: ['1', '3'],
+    participants: [mockUsers[0], mockUsers[2]],
     messages: [
       {
-        id: 'msg3',
+          id: 'msg3',
+        chatId: 'chat2',
         senderId: '3',
         text: 'Did you check the project?',
         timestamp: Date.now() - 86400000,
@@ -107,9 +109,9 @@ export async function seedDatabase() {
       console.log(`Adding participants for chat ${chat.id}...`);
       for (const userId of chat.participants) {
         await db.insert(chatParticipants).values({
-          id: `cp-${chat.id}-${userId}`,
+          id: `cp-${chat.id}-${userId.id}`,
           chatId: chat.id,
-          userId,
+          userId: userId.id,
         }).onConflictDoNothing();
       }
       

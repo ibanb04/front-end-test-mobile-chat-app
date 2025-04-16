@@ -10,7 +10,7 @@ interface ChatMessagesListProps {
   messages: Message[];
   currentUserId: string;
   onDeleteMessage: (messageId: string) => void;
-  onViewableItemsChanged: (info: { viewableItems: any[] }) => void;
+  onViewableItemsChanged?: (info: { viewableItems: any[] }) => void;
   flatListRef: React.RefObject<FlatList>;
 }
 
@@ -55,8 +55,8 @@ export const ChatMessagesList: React.FC<ChatMessagesListProps> = ({
       initialNumToRender={10}
       removeClippedSubviews={true}
       onEndReachedThreshold={0.5}
-      viewabilityConfig={viewabilityConfig}
-      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig} 
+      onViewableItemsChanged={onViewableItemsChanged || undefined}
     />
   );
 }; 
