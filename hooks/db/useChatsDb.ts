@@ -56,12 +56,28 @@ export function useChatsDb(currentUserId: string | null) {
   const sendMessage = useCallback(async (chatId: string, text: string, senderId: string, media?: Media | null) => {
     try {
       const newMessage = await chatRepository.sendMessage(chatId, text, senderId, media);
+      // Actualizar el estado inicial con el mensaje enviado
       setUserChats(prevChats => prevChats.map(chat => 
-        // Update the chat with the new message
         chat.id === chatId ? 
         { ...chat, messages: [...chat.messages, newMessage], lastMessage: newMessage } 
         : chat
       ));
+
+      // Simular el cambio de estado a delivered después de 1 segundo
+      setTimeout(() => {
+        setUserChats(prevChats => prevChats.map(chat => 
+          chat.id === chatId ? {
+            ...chat,
+            messages: chat.messages.map(msg => 
+              msg.id === newMessage.id ? { ...msg, status: 'delivered' } : msg
+            ),
+            lastMessage: chat.lastMessage?.id === newMessage.id 
+              ? { ...chat.lastMessage, status: 'delivered' } 
+              : chat.lastMessage
+          } : chat
+        ));
+      }, 1000);
+
       return true;
     } catch (error) {
       handleError(error, 'enviar mensaje');

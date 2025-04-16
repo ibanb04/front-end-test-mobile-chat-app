@@ -134,7 +134,6 @@ export class ChatRepository implements IChatRepository {
     }
 
     try {
-
       const messageId = `msg${Date.now()}`;
       const timestamp = Date.now();
 
@@ -153,6 +152,18 @@ export class ChatRepository implements IChatRepository {
       };
 
       await db.insert(messages).values(newMessage);
+
+      // Simular el cambio de estado a delivered después de 1 segundo
+      setTimeout(async () => {
+        try {
+          await db.update(messages)
+            .set({ status: 'delivered' })
+            .where(eq(messages.id, messageId));
+        } catch (error) {
+          console.error('Error al actualizar el estado del mensaje a delivered:', error);
+        }
+      }, 1000);
+
       return newMessage;
     } catch (error) {
       throw new ChatError('Error al enviar el mensaje', 'SEND_MESSAGE_ERROR');
