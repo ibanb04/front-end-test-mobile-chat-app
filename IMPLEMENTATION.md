@@ -45,6 +45,7 @@
 - Uso de TypeScript para mejor tipado y mantenibilidad
 - Separación clara de componentes y estilos
 - Implementación de interfaces bien definidas
+- Adaptación del patrón Repository para la gestión de datos y operaciones de base de datos
 
 ### Rendimiento
 - Optimización de la lista de mensajes con FlatList
