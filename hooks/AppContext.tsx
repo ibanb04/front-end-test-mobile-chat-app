@@ -43,7 +43,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     colors: Colors[colorScheme ?? 'light']
   }), [colorScheme]);
 
-  const contextValue = {
+  const contextValue = useMemo(() => ({
     currentUser,
     users,
     chats,
@@ -56,7 +56,20 @@ function AppContent({ children }: { children: React.ReactNode }) {
     theme,
     logout,
     deleteMessage,
-  };
+  }), [
+    currentUser,
+    users,
+    chats,
+    createChat,
+    sendMessage,
+    markMessageAsRead,
+    login,
+    isLoggedIn,
+    loading,
+    theme,
+    logout,
+    deleteMessage,
+  ]);
 
   return (
     <AppContext.Provider value={contextValue}>
