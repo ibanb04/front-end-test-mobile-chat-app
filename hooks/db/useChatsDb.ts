@@ -86,23 +86,7 @@ export function useChatsDb(currentUserId: string | null) {
   }, []);
 
   // Todo: fix this
-  const markMessageAsRead = useCallback(async (messageId: string, userId: string) => {
-    try {
-      const success = await chatRepository.markMessageAsRead(messageId, userId);
-      if (success) {
-        setUserChats(prevChats => prevChats.map(chat => {
-          const updatedMessages = chat.messages.map(msg => 
-            msg.id === messageId ? { ...msg, status: 'read' as const, reads: [...(msg.reads || []), { userId, timestamp: Date.now() }] } : msg
-          );
-          return { ...chat, messages: updatedMessages, lastMessage: chat.lastMessage?.id === messageId ? { ...chat.lastMessage, status: 'read' } : chat.lastMessage };
-        }));
-      }
-      return success;
-    } catch (error) {
-      handleError(error, 'marcar mensaje como leído');
-      return false;
-    }
-  }, []);
+ 
 
   const deleteMessage = useCallback(async (messageId: string, chatId: string) => {
     try {
@@ -119,12 +103,44 @@ export function useChatsDb(currentUserId: string | null) {
     }
   }, []);
 
+  const markMessagesAsRead = useCallback(async (chatId: string, messageIds: string[]) => {
+    try {
+      if (!currentUserId || messageIds.length === 0) return;
+      
+      await chatRepository.markMessagesAsRead(chatId, currentUserId, messageIds);
+      
+      setUserChats(prevChats => {
+        return prevChats.map(chat => {
+          if (chat.id === chatId) {
+            const updatedMessages = chat.messages.map(msg => 
+              messageIds.includes(msg.id) ? { ...msg, status: 'read' as const } : msg
+            );
+            
+            const lastMessage = chat.lastMessage && messageIds.includes(chat.lastMessage.id)
+              ? { ...chat.lastMessage, status: 'read' as const }
+              : chat.lastMessage;
+              
+            return {
+              ...chat,
+              messages: updatedMessages,
+              lastMessage,
+            };
+          }
+          return chat;
+        });
+      });
+    } catch (error) {
+      console.error('Error al marcar mensajes como leídos:', error);
+      handleError(error, 'marcar mensajes como leídos');
+    }
+  }, [currentUserId]);
+
   return {
     chats: userChats,
     createChat,
     sendMessage,
-    markMessageAsRead,
     deleteMessage,
+    markMessagesAsRead,
     loading: loading || !isInitialized,
   };
 }

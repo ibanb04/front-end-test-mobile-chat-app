@@ -4,8 +4,8 @@ export interface IChatRepository {
   createChat(participantIds: string[]): Promise<Chat | null>;
   loadChats(userId: string): Promise<Chat[]>;
   sendMessage(chatId: string, text: string, senderId: string, media?: Media | null): Promise<Message>;
-  markMessageAsRead(messageId: string, userId: string): Promise<boolean>;
   deleteMessage(messageId: string, chatId: string): Promise<boolean>;
+  markMessagesAsRead(chatId: string, userId: string, messageIds: string[]): Promise<void>;
 }
 
 export class ChatError extends Error {

@@ -21,7 +21,6 @@ interface AppContextType {
     senderId: string,
     media?: Media | null
   ) => Promise<boolean>;
-  markMessageAsRead: (messageId: string, userId: string) => Promise<boolean>;
   deleteMessage: (messageId: string, chatId: string) => Promise<boolean>;
   login: (userId: string) => Promise<boolean>;
   logout: () => void;
@@ -35,7 +34,7 @@ const AppContext = createContext<AppContextType | null>(null);
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isInitialized } = useDatabase();
   const { currentUser, users, login, isLoggedIn, loading: userLoading, logout } = useUser();
-  const { chats, createChat, sendMessage, markMessageAsRead, loading: chatsLoading, deleteMessage } = useChats(currentUser?.id || null);
+  const { chats, createChat, sendMessage, loading: chatsLoading, deleteMessage } = useChats(currentUser?.id || null);
   const colorScheme = useColorScheme();
   const loading = useMemo(() => !isInitialized || userLoading || chatsLoading, [isInitialized, userLoading, chatsLoading]);
 
@@ -49,7 +48,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
     chats,
     createChat,
     sendMessage,
-    markMessageAsRead,
     login,
     isLoggedIn,
     loading,
@@ -62,7 +60,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
     chats,
     createChat,
     sendMessage,
-    markMessageAsRead,
     login,
     isLoggedIn,
     loading,

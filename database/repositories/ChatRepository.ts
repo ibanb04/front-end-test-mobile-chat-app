@@ -95,13 +95,26 @@ export class ChatRepository implements IChatRepository {
     messagesWithReads: any[]
   ): Chat[] {
     return chatIds.map(chatId => {
-      const chatMessages = messagesWithReads
+      // Crear un Map para evitar duplicados usando el ID del mensaje como clave
+      const messageMap = new Map();
+      
+      messagesWithReads
         .filter(m => m.message.chatId === chatId)
-        .map(({ message, reads }) => ({
-          ...message,
-          status: message.status as 'sent' | 'delivered' | 'read',
-          reads: reads ? [{ userId: reads.userId, timestamp: reads.timestamp }] : [],
-        }));
+        .forEach(({ message, reads }) => {
+          const existingMessage = messageMap.get(message.id);
+          if (!existingMessage) {
+            messageMap.set(message.id, {
+              ...message,
+              status: message.status as 'sent' | 'delivered' | 'read',
+              reads: reads ? [{ userId: reads.userId, timestamp: reads.timestamp }] : [],
+            });
+          } else if (reads) {
+            // Si ya existe el mensaje y hay nuevas lecturas, las agregamos al array de reads
+            existingMessage.reads.push({ userId: reads.userId, timestamp: reads.timestamp });
+          }
+        });
+
+      const chatMessages = Array.from(messageMap.values());
 
       const participants = chatData
         .filter(c => c.chatId === chatId)
@@ -117,7 +130,7 @@ export class ChatRepository implements IChatRepository {
       return {
         id: chatId,
         participants,
-        messages: chatMessages.reverse(),
+        messages: chatMessages.sort((a, b) => a.timestamp - b.timestamp),
         lastMessage,
       };
     });
@@ -170,28 +183,6 @@ export class ChatRepository implements IChatRepository {
     }
   }
 
- 
-  // Todo: fix this 
-  async markMessageAsRead(messageId: string, userId: string): Promise<boolean> {
-    try {
-      const timestamp = Date.now();
-      const readEntry = {
-        id: `read${timestamp}`,
-        messageId,
-        userId,
-        timestamp,
-      };
-
-      await Promise.all([
-        db.insert(messageReads).values(readEntry),
-        db.update(messages).set({ status: 'read' }).where(eq(messages.id, messageId))
-      ]);
-
-      return true;
-    } catch (error) {
-      throw new ChatError('Error al marcar el mensaje como leído', 'MARK_AS_READ_ERROR');
-    }
-  }
 
   async deleteMessage(messageId: string, chatId: string): Promise<boolean> {
     try {
@@ -200,6 +191,29 @@ export class ChatRepository implements IChatRepository {
       return true;
     } catch (error) {
       throw new ChatError('Error al eliminar el mensaje', 'DELETE_MESSAGE_ERROR');
+    }
+  }
+
+  async markMessagesAsRead(chatId: string, userId: string, messageIds: string[]): Promise<void> {
+    try {
+      const timestamp = Date.now();
+      
+      // Insertar registros de lectura para cada mensaje
+      for (const messageId of messageIds) {
+        await db.insert(messageReads).values({
+          id: `read${Date.now()}_${messageId}`,
+          messageId,
+          userId,
+          timestamp,
+        });
+
+        // Actualizar el estado del mensaje a 'read'
+        await db.update(messages)
+          .set({ status: 'read' })
+          .where(eq(messages.id, messageId));
+      }
+    } catch (error) {
+      throw new ChatError('Error al marcar mensajes como leídos', 'MARK_MESSAGES_READ_ERROR');
     }
   }
 } 

@@ -1,7 +1,7 @@
 import { useChatsDb } from './db/useChatsDb';
 import type { Chat, Media } from '@/interfaces/chatTypes';
 export function useChats(currentUserId: string | null) {
-  const { chats, createChat, sendMessage, markMessageAsRead, loading, deleteMessage  } = useChatsDb(currentUserId);
+  const { chats, createChat, sendMessage,  loading, deleteMessage, markMessagesAsRead } = useChatsDb(currentUserId);
 
   // aux function to sort chats by last message timestamp in descending order
   const sortChatsByLastMessage = (chats: Chat[]): Chat[] => {
@@ -20,8 +20,8 @@ export function useChats(currentUserId: string | null) {
       senderId: string,
       media?: Media | null
     ) => sendMessage(chatId, text, senderId, media),
-    markMessageAsRead,
     deleteMessage,  
+    markMessagesAsRead,
     loading,
   };
 } 

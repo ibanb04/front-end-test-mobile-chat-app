@@ -17,6 +17,7 @@ import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MediaPreview } from '@/components/chat/MediaPreview';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { ChatMessagesList } from '@/components/chat/ChatMessagesList';
+import { useMessageStatus } from '@/hooks/useMessageStatus';
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
@@ -46,7 +47,7 @@ export default function ChatRoomScreen() {
     prepareMedia,
   } = useMediaPicker();
 
-  // const { onViewableItemsChanged } = useMessageStatus();
+    const { onViewableItemsChanged } = useMessageStatus(currentUser.id, chatId);
 
   const {
     flatListRef,
@@ -105,6 +106,8 @@ export default function ChatRoomScreen() {
           currentUserId={currentUser.id}
           onDeleteMessage={handleDeleteMessage}
           flatListRef={flatListRef}
+          chatId={chatId}
+          onViewableItemsChanged={onViewableItemsChanged}
         />
 
         {selectedMedia && (
